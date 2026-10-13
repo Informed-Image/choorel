@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>AAO 2026 · Food Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #f59e0b; --gold-light: #fbbf24;
+    --usf-color: #3b82f6; --ioa-color: #10b981;
+    --mild-bg: #d1fae5; --mild-text: #065f46;
+    --mod-bg: #fef3c7; --mod-text: #92400e;
+    --thrill-bg: #fee2e2; --thrill-text: #991b1b;
+  }
+  [data-theme="dark"] {
+    --bg: #0c1a2e; --surface: #111f35; --card: #152540;
+    --border: rgba(255,255,255,0.07); --text: #f1f5f9;
+    --text2: #94a3b8; --text3: #64748b;
+    --venue-bg: rgba(255,255,255,0.04); --venue-border: rgba(255,255,255,0.08);
+    --tag-bg: rgba(255,255,255,0.05); --toggle-bg: #1a2f4a;
+    --toggle-border: rgba(255,255,255,0.1);
+    --buffet-bg: rgba(245,158,11,0.07); --buffet-border: rgba(245,158,11,0.2);
+  }
+  [data-theme="light"] {
+    --bg: #f0f4f8; --surface: #ffffff; --card: #ffffff;
+    --border: #e2e8f0; --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+    --venue-bg: #f8fafc; --venue-border: #e2e8f0;
+    --tag-bg: #f1f5f9; --toggle-bg: #f1f5f9; --toggle-border: #e2e8f0;
+    --buffet-bg: rgba(245,158,11,0.05); --buffet-border: rgba(245,158,11,0.25);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); font-family: 'Open Sans', sans-serif;
+    color: var(--text); min-height: 100vh; padding: 20px 14px 56px;
+    transition: background 0.25s, color 0.25s;
+  }
+  [data-theme="dark"] body {
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(59,130,246,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 100%, rgba(16,185,129,0.05) 0%, transparent 50%);
+  }
+
+  /* TOGGLE */
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 100;
+    background: var(--toggle-bg); border: 1.5px solid var(--toggle-border);
+    border-radius: 50px; padding: 7px 14px; cursor: pointer;
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Open Sans', sans-serif; font-size: 12px; font-weight: 700;
+    color: var(--text2); transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* HEADER */
+  .header { text-align: center; margin-bottom: 24px; padding-top: 6px; }
+  .eyebrow {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif; font-size: clamp(24px, 6vw, 38px);
+    font-weight: 700; color: var(--text); margin-bottom: 6px;
+  }
+  .header p { color: var(--text2); font-size: 13px; }
+
+  /* FILTER SECTIONS */
+  .filter-section { max-width: 780px; margin: 0 auto 10px; }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin-bottom: 8px; }
+  .filter-row-label {
+    font-size: 10px; font-weight: 800; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 1.5px; min-width: 56px;
+  }
+
+  .fbtn {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px;
+    font-family: 'Open Sans', sans-serif; font-weight: 700; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--surface); color: var(--text2);
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .fbtn:hover { border-color: var(--gold); }
+  .fbtn.active-park-all  { border-color: var(--gold); background: rgba(245,158,11,0.1); color: var(--gold); }
+  .fbtn.active-park-usf  { border-color: var(--usf-color); background: rgba(59,130,246,0.1); color: var(--usf-color); }
+  .fbtn.active-park-ioa  { border-color: var(--ioa-color); background: rgba(16,185,129,0.1); color: var(--ioa-color); }
+  .fbtn.active-cat-food  { border-color: #f97316; background: rgba(249,115,22,0.1); color: #f97316; }
+  .fbtn.active-cat-sweet { border-color: #ec4899; background: rgba(236,72,153,0.1); color: #ec4899; }
+  .fbtn.active-cat-drink { border-color: #06b6d4; background: rgba(6,182,212,0.1); color: #06b6d4; }
+  .fbtn.active-diet-vegan { border-color: #16a34a; background: rgba(22,163,74,0.1); color: #16a34a; }
+  .fbtn.active-diet-veg   { border-color: #65a30d; background: rgba(101,163,13,0.1); color: #65a30d; }
+  .fbtn.active-diet-gf    { border-color: #d97706; background: rgba(217,119,6,0.1); color: #d97706; }
+
+  .filter-divider { max-width: 780px; margin: 0 auto 16px; height: 1px; background: var(--border); }
+
+  /* RESULT SUMMARY */
+  .result-bar {
+    max-width: 780px; margin: 0 auto 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .result-count { font-size: 12px; color: var(--text3); font-weight: 700; }
+  .clear-btn {
+    font-size: 11px; font-weight: 700; color: var(--gold); cursor: pointer;
+    background: none; border: none; font-family: 'Open Sans', sans-serif;
+    padding: 0; display: none;
+  }
+  .clear-btn.visible { display: inline; }
+
+  /* PARK BLOCK */
+  .park-block { max-width: 780px; margin: 0 auto 36px; }
+  .park-block.hidden { display: none; }
+  .park-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 18px; padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  .park-pill {
+    padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .park-pill.usf { background: rgba(59,130,246,0.15); color: var(--usf-color); border: 1.5px solid rgba(59,130,246,0.3); }
+  .park-pill.ioa { background: rgba(16,185,129,0.15); color: var(--ioa-color); border: 1.5px solid rgba(16,185,129,0.3); }
+  .park-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; }
+
+  /* AREA */
+  .area-block { margin-bottom: 22px; }
+  .area-block.hidden { display: none; }
+  .area-name {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text3); margin-bottom: 10px; padding-left: 2px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .area-name::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* VENUE CARD */
+  .venue-card {
+    background: var(--venue-bg); border: 1px solid var(--venue-border);
+    border-radius: 12px; margin-bottom: 8px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .venue-card.hidden { display: none; }
+  .venue-card.buffet-card { background: var(--buffet-bg); border-color: var(--buffet-border); }
+
+  .venue-header {
+    padding: 11px 16px 9px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+  }
+  .venue-name { font-size: 14px; font-weight: 700; color: var(--text); flex: 1; min-width: 120px; }
+
+  .vtype {
+    font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap;
+  }
+  .vt-buffet    { background: rgba(245,158,11,0.15); color: #d97706; border: 1px solid rgba(245,158,11,0.3); }
+  .vt-rest      { background: rgba(99,102,241,0.1);  color: #6366f1; border: 1px solid rgba(99,102,241,0.25); }
+  .vt-qs        { background: rgba(59,130,246,0.1);  color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); }
+  .vt-snack     { background: rgba(148,163,184,0.12);color: var(--text3); border: 1px solid var(--border); }
+  .vt-bar       { background: rgba(168,85,247,0.1);  color: #a855f7; border: 1px solid rgba(168,85,247,0.25); }
+  .vt-ice       { background: rgba(244,114,182,0.1); color: #ec4899; border: 1px solid rgba(244,114,182,0.25); }
+
+  .svc-time {
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    display: flex; align-items: center; gap: 4px; white-space: nowrap;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot-green  { background: #22c55e; }
+  .dot-yellow { background: #f59e0b; }
+  .dot-red    { background: #ef4444; }
+
+  /* MENU ITEMS */
+  .menu-items { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 5px; }
+
+  .menu-item {
+    display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px;
+    padding: 7px 10px; border-radius: 8px; background: var(--tag-bg);
+    transition: opacity 0.15s;
+  }
+  .menu-item.hidden { display: none; }
+
+  .item-left { flex: 1; min-width: 140px; }
+  .item-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; }
+  .item-desc { font-size: 11px; color: var(--text2); font-style: italic; margin-top: 2px; line-height: 1.4; }
+
+  .item-tags { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+
+  /* category pills */
+  .ctag {
+    font-size: 10px; font-weight: 700; padding: 1px 8px; border-radius: 10px; white-space: nowrap;
+  }
+  .ctag-food  { background: rgba(249,115,22,0.12); color: #ea580c; border: 1px solid rgba(249,115,22,0.25); }
+  .ctag-sweet { background: rgba(236,72,153,0.12); color: #db2777; border: 1px solid rgba(236,72,153,0.25); }
+  .ctag-drink { background: rgba(6,182,212,0.12);  color: #0891b2; border: 1px solid rgba(6,182,212,0.25); }
+
+  /* dietary pills */
+  .dtag { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+  .dtag-vegan { background: #dcfce7; color: #15803d; }
+  .dtag-veg   { background: #ecfccb; color: #4d7c0f; }
+  .dtag-gf    { background: #fef3c7; color: #b45309; }
+
+  .bev-note { font-size: 12px; color: var(--text2); padding: 6px 16px 12px; font-style: italic; }
+
+  .footer { text-align: center; margin-top: 32px; color: var(--text3); font-size: 12px; line-height: 2; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()">
+  <span id="themeIcon">☀️</span>
+  <span id="themeLabel">Light Mode</span>
+</button>
+
+<div class="header">
+  <div class="eyebrow">AAO 2026 · May 2, 2026 · Universal Orlando Resort</div>
+  <h1>Food Guide</h1>
+  <p>All dining venues open during tonight's exclusive event</p>
+</div>
+
+<div class="filter-section">
+  <!-- Park -->
+  <div class="filter-row">
+    <span class="filter-row-label">Park</span>
+    <button class="fbtn active-park-all" id="btn-park-all"  onclick="setPark('all',this)">🍽 Both Parks</button>
+    <button class="fbtn" id="btn-park-usf"  onclick="setPark('usf',this)">🎬 Universal Studios FL</button>
+    <button class="fbtn" id="btn-park-ioa"  onclick="setPark('ioa',this)">🌊 Islands of Adventure</button>
+  </div>
+  <!-- Category -->
+  <div class="filter-row">
+    <span class="filter-row-label">Show</span>
+    <button class="fbtn" id="btn-cat-food"  onclick="toggleCat('food',this)">🍔 Food</button>
+    <button class="fbtn" id="btn-cat-sweet" onclick="toggleCat('sweet',this)">🍰 Sweet Treats</button>
+    <button class="fbtn" id="btn-cat-drink" onclick="toggleCat('drink',this)">🥤 Drinks</button>
+  </div>
+  <!-- Dietary -->
+  <div class="filter-row">
+    <span class="filter-row-label">Diet</span>
+    <button class="fbtn" id="btn-diet-vegan" onclick="toggleDiet('vegan',this)">🌱 Vegan</button>
+    <button class="fbtn" id="btn-diet-veg"   onclick="toggleDiet('veg',this)">🥦 Vegetarian</button>
+    <button class="fbtn" id="btn-diet-gf"    onclick="toggleDiet('gf',this)">🌾 Gluten Sensitive</button>
+  </div>
+</div>
+
+<div class="filter-divider"></div>
+
+<div class="result-bar">
+  <span class="result-count" id="resultCount"></span>
+  <button class="clear-btn" id="clearBtn" onclick="clearFilters()">✕ Clear filters</button>
+</div>
+
+<!-- ══════════════ USF ══════════════ -->
+<div class="park-block" id="usf-block">
+  <div class="park-header">
+    <span class="park-pill usf">USF</span>
+    <span class="park-title">Universal Studios Florida</span>
+  </div>
+
+  <!-- Hollywood -->
+  <div class="area-block">
+    <div class="area-name">Hollywood</div>
+
+    <div class="venue-card buffet-card">
+      <div class="venue-header">
+        <span class="venue-name">Street Buffet — Hawashi Street</span>
+        <span class="vtype vt-buffet">Buffet</span>
+        <span class="svc-time"><span class="dot dot-yellow"></span>Until 9:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Hawashi Street Sandwich</span><span class="item-desc">Grilled ribeye or grilled zucchini/squash/mushroom with herb, pepper &amp; onions, roasted garlic aioli</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">TODAY Café</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="1">
+          <div class="item-left"><span class="item-name">Chicken Pesto Flatbread</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-gf">GF Sensitive</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="1">
+          <div class="item-left"><span class="item-name">Chinatown Chicken Salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-gf">GF Sensitive</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Heart Vegan Bowl</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Mel's Drive-In</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Hamburgers &amp; Cheeseburgers</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Grilled Chicken Sandwich</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">VEGAN Field Roast Chili Dog</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">French Fries &amp; Garden Salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Bite Size Apple Pies</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+        <div class="menu-item" data-cat="drink" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Mini Milkshakes</span><span class="item-desc">Chocolate, Vanilla or Strawberry</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Cafe La Bamba</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Mojo Pork &amp; Mojo Chicken Tacos</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">VEGAN Chorizo with Cilantro Rice &amp; Black Beans</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Miniature Caramel Flan</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /hollywood -->
+
+  <!-- Minion Land -->
+  <div class="area-block">
+    <div class="area-name">Illumination's Minion Land</div>
+    <div class="venue-card buffet-card">
+      <div class="venue-header">
+        <span class="venue-name">Street Buffet — Illumination Avenue</span>
+        <span class="vtype vt-buffet">Buffet</span>
+        <span class="svc-time"><span class="dot dot-yellow"></span>Until 9:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Carved Roast Sirloin of Beef</span><span class="item-desc">With Kaiser rolls, balsamic mayo, mustard, horseradish cream</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Illumination's Minion Café</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Kevin's Chopa Chopa Salad</span><span class="item-desc">Purple cabbage, arugula, tomatoes, cucumber, edamame, crispy pork belly, rotisserie chicken, banana chips, mustard ale vinaigrette</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="1">
+          <div class="item-left"><span class="item-name">El Macho's Ropa Vieja</span><span class="item-desc">Braised beef, tomato cucumber salad, cilantro rice, salsa roja, tostones</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-gf">GF Sensitive</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Steak &amp; "Cheese Ray" Sliders</span><span class="item-desc">French onion roast beef, caramelized onions, pimento cheese on cheddar &amp; onion roll</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Pop-A-Nana &amp; Freeze Ray Pops</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="sweet" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Banana Popcorn</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Specialty Popsicles (variety)</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /minion land -->
+
+  <!-- New York -->
+  <div class="area-block">
+    <div class="area-name">New York</div>
+    <div class="venue-card buffet-card">
+      <div class="venue-header">
+        <span class="venue-name">Street Buffet — New York Streets</span>
+        <span class="vtype vt-buffet">Buffet</span>
+        <span class="svc-time"><span class="dot dot-yellow"></span>Until 9:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">Greek Salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-veg">Vegetarian</span><span class="dtag dtag-gf">GF Sensitive</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Kofta Kebab</span><span class="item-desc">Grilled Mediterranean kebabs, charred pita, tzatziki</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">All Beef Hot Dogs</span><span class="item-desc">With ketchup, mustard, relish, onions, sauerkraut, chili</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Finnegan's Bar &amp; Grill</span>
+        <span class="vtype vt-rest">Restaurant</span>
+        <span class="svc-time"><span class="dot dot-yellow"></span>Until 9:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="1">
+          <div class="item-left"><span class="item-name">Hot Wings</span><span class="item-desc">With celery sticks, ranch &amp; blue cheese</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-gf">GF Sensitive</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Beef Pasti</span><span class="item-desc">Pastry pies with ground beef, potatoes &amp; carrot; served with apple beet salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Bread Pudding with Whiskey Sauce</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Louie's Italian Restaurant</span>
+        <span class="vtype vt-rest">Restaurant</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Fettuccine Alfredo</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Caesar Salad with Grilled Chicken</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Spaghetti &amp; Meatballs</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">VEGAN Sausage &amp; Peppers</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Pizza — Cheese, Veggie &amp; Pepperoni</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-veg">Vegetarian (cheese/veggie)</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Mini Italian Cannoli</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Avenue Eats &amp; 57 Fare Snack Carts</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Chicken Empanada, Loaded Nachos, Pao de Queijo</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">NY Style Pizza, Nathan's Hotdog, Cheddar Soft Pretzel</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /new york -->
+
+  <!-- San Francisco -->
+  <div class="area-block">
+    <div class="area-name">San Francisco</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Richter's Burger Co.</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Bacon Cheeseburger, Aftershock Burger, Mutha Nature Burger</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Crispy Chicken Sandwich</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">French Fries &amp; Small Garden Salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span><span class="dtag dtag-gf">GF Sensitive</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Giant Chocolate Chip Cookie</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+        <div class="menu-item" data-cat="drink" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Chocolate Milkshake</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Chez Alcatraz</span>
+        <span class="vtype vt-bar">Bar</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="drink" data-vegan="1" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">Beverage Service</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">SF Snack Carts (Streetcar &amp; SF Snacks)</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Cantonese Donut Stick, Churro, Popcorn</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Pretzels</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /san francisco -->
+
+  <!-- Diagon Alley -->
+  <div class="area-block">
+    <div class="area-name">⚡ Diagon Alley — Wizarding World</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Leaky Cauldron™</span>
+        <span class="vtype vt-rest">Restaurant</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">Apple &amp; Beet Salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span><span class="dtag dtag-gf">GF Sensitive</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Shepherd's Pie</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Fish and Chips</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="drink" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Butterbeer™</span><span class="item-desc">Regular, Frozen &amp; Hot</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Florean Fortescue's Ice-Cream Parlour</span>
+        <span class="vtype vt-ice">Ice Cream</span>
+        <span class="svc-time"><span class="dot dot-yellow"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Specialty Ice Cream — Variety of Flavors</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">The Hopping Pot &amp; Fountain of Fair Fortune</span>
+        <span class="vtype vt-bar">Beverages</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="drink" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Butterbeer™ — Regular, Frozen &amp; Hot</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+        <div class="menu-item" data-cat="drink" data-vegan="1" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">Pumpkin Juice™, Gilly Water, Lemonade, Iced Tea</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /diagon alley -->
+
+  <!-- World Expo -->
+  <div class="area-block">
+    <div class="area-name">World Expo</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">World Expo Snack Carts</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Hot Dog, Chips, Cinnamon Bavarian Pretzel</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Popcorn, Churro</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /world expo -->
+
+  <!-- Springfield -->
+  <div class="area-block">
+    <div class="area-name">🍩 Springfield — The Simpsons</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Fast Food Boulevard</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Krusty Burger — Burgers, Foot-Long Hot Dog, Kurly Fries</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Cletus' Chicken Shack — Chicken &amp; Waffle Sandwich, Grilled Chicken, Chicken Arms, Tater Tots</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Lisa's Teahouse — Caesar Salad, Turkey Wrap, Veggie Sandwich, Fruit Cups</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-veg">Vegetarian options</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">The Frying Dutchman — Fried Cod, Calamari, Coconut Shrimp, Clam Chowder</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Luigi's Pizza — Meat, Veggie &amp; Cheese Pizza</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-veg">Vegetarian options</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Moe's Tavern</span>
+        <span class="vtype vt-bar">Bar</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="drink" data-vegan="1" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">Beverage Service</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Duff Gardens</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Sideshow Bob's Corn Dog</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /springfield -->
+
+  <!-- DreamWorks Land -->
+  <div class="area-block">
+    <div class="area-name">DreamWorks Land</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">DreamWorks Imagination Cafe &amp; Swamp Snacks</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Sandwiches, Wraps &amp; Snack Items (menus TBD)</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Trolls Treats</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Poppy-Licious Pink Lemonade Soft Serve</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Brozone Berry Huckleberry Soft Serve</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /dreamworks -->
+</div><!-- /usf -->
+
+<!-- ══════════════ IOA ══════════════ -->
+<div class="park-block" id="ioa-block">
+  <div class="park-header">
+    <span class="park-pill ioa">IOA</span>
+    <span class="park-title">Islands of Adventure</span>
+  </div>
+
+  <!-- Port of Entry -->
+  <div class="area-block">
+    <div class="area-name">Port of Entry</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Cinnabon®</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Cinnabons &amp; CinnaSweeties™</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Croissant Moon Bakery</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Assorted Sandwiches</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Assorted Pastries</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card buffet-card">
+      <div class="venue-header">
+        <span class="venue-name">Confisco's Grille — Buffet Station</span>
+        <span class="vtype vt-buffet">Buffet</span>
+        <span class="svc-time"><span class="dot dot-yellow"></span>Until 9:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Mediterranean Quinoa Salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Sweet &amp; Sour Sticky Ribs with Fried Rice</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Stir-Fry Vegetables</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /port of entry -->
+
+  <!-- Marvel -->
+  <div class="area-block">
+    <div class="area-name">🦸 Marvel Super Hero Island</div>
+    <div class="venue-card buffet-card">
+      <div class="venue-header">
+        <span class="venue-name">Street Buffet — Marvel Island</span>
+        <span class="vtype vt-buffet">Buffet</span>
+        <span class="svc-time"><span class="dot dot-yellow"></span>Until 9:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Super Green Pasta Salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Smoked Beef Brisket</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Vegan Sausage &amp; Greens Pasta</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Cobblers &amp; Cake Bites</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Cafe 4</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Cheese &amp; Pepperoni Pizza</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-veg">Vegetarian (cheese)</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Fettuccine Alfredo &amp; Caesar Salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Garlic Breadsticks</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Strawberry Cheesecake</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Captain America Diner®</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Hamburgers, Cheeseburgers, Grilled Chicken Sandwich, French Fries</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="drink" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Chocolate &amp; Vanilla Milkshakes</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Hero Popcorn Snack Cart</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Popcorn, Churro with Chocolate Sauce</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Soft Pretzel with Cheese Sauce</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /marvel -->
+
+  <!-- Toon Lagoon -->
+  <div class="area-block">
+    <div class="area-name">Toon Lagoon</div>
+    <div class="venue-card buffet-card">
+      <div class="venue-header">
+        <span class="venue-name">Street Buffet — Dessert Bar</span>
+        <span class="vtype vt-buffet">Buffet</span>
+        <span class="svc-time"><span class="dot dot-yellow"></span>Until 9:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Dessert Bar &amp; Ice Cream Sundae Bar</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Comic Strip Cafe</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Grilled Chicken Sandwich Platter</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Char Siu Ramen &amp; Beef Bulgogi Ramen</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Tofu Ramen</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Chocolate Chip Cookie</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Cathy's Ice Cream</span>
+        <span class="vtype vt-ice">Ice Cream</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Ice Cream Sundaes</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Blondie's &amp; Wimpy's</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Assorted Sandwiches (Blondie's), Hamburgers &amp; Fries (Wimpy's)</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /toon lagoon -->
+
+  <!-- Skull Island -->
+  <div class="area-block">
+    <div class="area-name">Skull Island</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Mess Tent Snack Cart</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Salted Bavarian Pretzel with Cheese Sauce</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Churros</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /skull island -->
+
+  <!-- Jurassic Park -->
+  <div class="area-block">
+    <div class="area-name">🦕 Jurassic Park</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Thunder Falls Terrace</span>
+        <span class="vtype vt-rest">Restaurant</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="1">
+          <div class="item-left"><span class="item-name">Rotisserie Chicken &amp; Roasted Pernil Platter</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-gf">GF Sensitive</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">Roasted Potatoes &amp; Corn on the Cob</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span><span class="dtag dtag-gf">GF Sensitive</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Key Lime Cheesecake</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">The Burger Digs</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Cheeseburgers, Hamburgers, Chicken Sandwich, French Fries</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Chocolate Chip Cookies</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">JP Snack Carts (Beer &amp; Popcorn)</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Pretzel with Cheese Sauce</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Popcorn &amp; Churros</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /jurassic park -->
+
+  <!-- Hogsmeade -->
+  <div class="area-block">
+    <div class="area-name">⚡ Hogsmeade — Wizarding World</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Three Broomsticks™</span>
+        <span class="vtype vt-rest">Restaurant</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Roasted Chicken &amp; Pork Ribs</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Shepherd's Pie</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Apple Pie &amp; Strawberry Peanut Butter Ice Cream</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+        <div class="menu-item" data-cat="drink" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Butterbeer™ — Regular, Frozen &amp; Hot</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Hog's Head™, Magic Neep™ &amp; Butterbeer™ Cart</span>
+        <span class="vtype vt-bar">Beverages</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="drink" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Butterbeer™ — Regular, Frozen &amp; Hot</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+        <div class="menu-item" data-cat="drink" data-vegan="1" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">Pumpkin Juice™, Gilly Water</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="drink" data-vegan="1" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">Full Bar Available (Hog's Head)</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /hogsmeade -->
+
+  <!-- Lost Continent -->
+  <div class="area-block">
+    <div class="area-name">The Lost Continent</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Fire Eater's Grill &amp; Doc Sugrue's Desert Kebab House</span>
+        <span class="vtype vt-rest">Restaurant</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Chicken Fingers, Chicken Stingers, Gyro Platter</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Salad</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Desert Kebabs</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /lost continent -->
+
+  <!-- Seuss Landing -->
+  <div class="area-block">
+    <div class="area-name">🎪 Seuss Landing</div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Circus McGurkus Cafe Stoo-pendous™</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Tamed Dragon Salad, "Popcorn" Shrimp Box, Mini Roast Beast Sandwich, Pizza Pasta</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Caramel Popcorn Cupcake</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Green Eggs &amp; Ham™ Cafe</span>
+        <span class="vtype vt-qs">Quick Service</span>
+        <span class="svc-time"><span class="dot dot-green"></span>Until 10:30 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="0" data-gf="0">
+          <div class="item-left"><span class="item-name">Green Eggs &amp; Ham Tots, Buffalo Chicken Tots</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="1" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">VEGAN Pizza Tots</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="food" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Pizza Tots</span></div>
+          <div class="item-tags"><span class="ctag ctag-food">Food</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Hop on Pop™ Ice Cream Shop</span>
+        <span class="vtype vt-ice">Ice Cream</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Ice Cream Sundaes &amp; Ice Cream Cones</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span><span class="dtag dtag-veg">Vegetarian</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="venue-card">
+      <div class="venue-header">
+        <span class="venue-name">Moose Juice, Goose Juice &amp; Seuss Icee Cart</span>
+        <span class="vtype vt-snack">Snack Cart</span>
+        <span class="svc-time"><span class="dot dot-red"></span>Until 11:00 PM</span>
+      </div>
+      <div class="menu-items">
+        <div class="menu-item" data-cat="drink" data-vegan="1" data-veg="1" data-gf="1">
+          <div class="item-left"><span class="item-name">Moose Juice &amp; Goose Juice — Specialty Drinks</span></div>
+          <div class="item-tags"><span class="ctag ctag-drink">Drink</span><span class="dtag dtag-vegan">Vegan</span></div>
+        </div>
+        <div class="menu-item" data-cat="sweet" data-vegan="0" data-veg="1" data-gf="0">
+          <div class="item-left"><span class="item-name">Cinnamon Churro, Pretzel</span></div>
+          <div class="item-tags"><span class="ctag ctag-sweet">Sweet Treat</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /seuss landing -->
+</div><!-- /ioa -->
+
+<div class="footer">
+  Data sourced from aao2026.splashthat.com · Dietary tags based on event listings<br>
+  Always confirm allergens with a catering team member · 🟡 Closes 9:30 PM · 🔴 Closes at stated time
+</div>
+
+<script>
+let currentPark = 'all';
+let activeCats  = new Set();
+let activeDiets = new Set();
+let isDark = true;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = isDark ? 'Light Mode' : 'Dark Mode';
+}
+
+function setPark(park, btn) {
+  currentPark = park;
+  ['all','usf','ioa'].forEach(p => {
+    const b = document.getElementById('btn-park-' + p);
+    b.className = 'fbtn' + (p === park ? ' active-park-' + p : '');
+  });
+  applyFilters();
+}
+
+function toggleCat(cat, btn) {
+  if (activeCats.has(cat)) { activeCats.delete(cat); btn.className = 'fbtn'; }
+  else { activeCats.add(cat); btn.className = 'fbtn active-cat-' + cat; }
+  applyFilters();
+}
+
+function toggleDiet(diet, btn) {
+  if (activeDiets.has(diet)) { activeDiets.delete(diet); btn.className = 'fbtn'; }
+  else { activeDiets.add(diet); btn.className = 'fbtn active-diet-' + diet; }
+  applyFilters();
+}
+
+function clearFilters() {
+  currentPark = 'all';
+  activeCats.clear(); activeDiets.clear();
+  document.getElementById('btn-park-all').className = 'fbtn active-park-all';
+  ['btn-park-usf','btn-park-ioa'].forEach(id => document.getElementById(id).className = 'fbtn');
+  ['food','sweet','drink'].forEach(c => document.getElementById('btn-cat-' + c).className = 'fbtn');
+  ['vegan','veg','gf'].forEach(d => document.getElementById('btn-diet-' + d).className = 'fbtn');
+  applyFilters();
+}
+
+function applyFilters() {
+  const hasFilters = activeCats.size > 0 || activeDiets.size > 0 || currentPark !== 'all';
+  document.getElementById('clearBtn').className = 'clear-btn' + (hasFilters ? ' visible' : '');
+
+  // Park blocks
+  document.getElementById('usf-block').classList.toggle('hidden', currentPark === 'ioa');
+  document.getElementById('ioa-block').classList.toggle('hidden', currentPark === 'usf');
+
+  // Items
+  document.querySelectorAll('.menu-item').forEach(item => {
+    let show = true;
+    if (activeCats.size > 0 && !activeCats.has(item.dataset.cat)) show = false;
+    if (activeDiets.size > 0) {
+      let dietOk = false;
+      activeDiets.forEach(d => {
+        if (d === 'vegan' && item.dataset.vegan === '1') dietOk = true;
+        if (d === 'veg'   && (item.dataset.veg === '1' || item.dataset.vegan === '1')) dietOk = true;
+        if (d === 'gf'    && item.dataset.gf === '1') dietOk = true;
+      });
+      if (!dietOk) show = false;
+    }
+    item.classList.toggle('hidden', !show);
+  });
+
+  // Hide venue cards with no visible items
+  document.querySelectorAll('.venue-card').forEach(card => {
+    const items = card.querySelectorAll('.menu-item');
+    if (!items.length) { card.classList.remove('hidden'); return; }
+    card.classList.toggle('hidden', !Array.from(items).some(i => !i.classList.contains('hidden')));
+  });
+
+  // Hide area blocks with no visible cards
+  document.querySelectorAll('.area-block').forEach(area => {
+    const cards = area.querySelectorAll('.venue-card');
+    area.classList.toggle('hidden', !Array.from(cards).some(c => !c.classList.contains('hidden')));
+  });
+
+  // Count visible items
+  const total = document.querySelectorAll('.menu-item:not(.hidden)').length;
+  document.getElementById('resultCount').textContent = `Showing ${total} item${total !== 1 ? 's' : ''}`;
+}
+
+applyFilters();
+</script>
+</body>
+</html>

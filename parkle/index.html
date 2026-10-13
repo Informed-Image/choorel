@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Parkle Unlimited — Disney Word Puzzle</title>
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1e;
+      --surface: #141929;
+      --border: #2a3050;
+      --correct: #1db954;
+      --present: #f5a623;
+      --absent: #2d3454;
+      --text: #e8eaf6;
+      --muted: #6b7299;
+      --accent: #7c4dff;
+      --key-bg: #2a3454;
+      --key-text: #e8eaf6;
+      --tile-size: 62px;
+      --gap: 6px;
+      --header-height: 60px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+
+    html {
+      /* iOS Safari full-height fix */
+      height: -webkit-fill-available;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      /* Use dvh so Safari address bar is accounted for */
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      /* DO NOT use position:fixed — it breaks Safari address bar handling */
+    }
+
+    /* Stars bg */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 70% 15%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 50% 60%, rgba(255, 255, 255, 0.2) 0%, transparent 100%),
+        radial-gradient(1px 1px at 85% 80%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 90%, rgba(255, 255, 255, 0.2) 0%, transparent 100%),
+        radial-gradient(1px 1px at 35% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 40%, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      width: 100%;
+      max-width: 500px;
+      min-height: var(--header-height);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 28px;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #7c4dff, #e040fb, #f5a623);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo span {
+      font-size: 13px;
+      display: block;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      -webkit-text-fill-color: var(--muted);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: -4px;
+    }
+
+    .header-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .icon-btn:hover {
+      background: var(--border);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* ── MAIN: fills remaining height, no scroll ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 500px;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      padding: 8px 10px 8px;
+      gap: 6px;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 14px;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 100;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── CONTROLS ── */
+    .word-length-selector {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .len-btn {
+      background: var(--key-bg);
+      border: 2px solid transparent;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+
+    .len-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(124, 77, 255, 0.15);
+    }
+
+    #word-counter {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      flex-shrink: 0;
+      margin-top: -4px;
+    }
+
+    /* ── GIVE UP ── */
+    #giveup-bar {
+      display: none;
+      flex-shrink: 0;
+    }
+
+    #giveup-bar.show {
+      display: block;
+    }
+
+    #giveup-btn {
+      background: none;
+      border: 1px solid #3a2a2a;
+      color: #664444;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    #giveup-btn:hover {
+      border-color: #f44336;
+      color: #f44336;
+    }
+
+    #giveup-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* ── HINT BAR ── */
+    .hint-bar {
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      text-align: center;
+      padding: 0 10px;
+    }
+
+    .hint-bar .hint-text {
+      color: var(--present);
+      font-weight: 700;
+      animation: fadeUp 0.4s ease;
+    }
+
+    #hint-btn {
+      background: var(--surface);
+      border: 1px solid #6a2fa0;
+      color: #ce93d8;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      box-shadow: 0 0 8px rgba(156, 39, 176, 0.25);
+      flex-shrink: 0;
+    }
+
+    #hint-btn:active {
+      transform: scale(0.92);
+    }
+
+    #hint-btn:disabled {
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .hint-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    /* ── BOARD ── */
+    #board {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      flex-shrink: 0;
+    }
+
+    .row {
+      display: flex;
+      gap: var(--gap);
+    }
+
+    .tile {
+      width: var(--tile-size, 62px);
+      height: var(--tile-size, 62px);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 34px;
+      letter-spacing: 1px;
+      transition: border-color 0.1s, transform 0.1s;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .tile.filled {
+      border-color: var(--muted);
+      animation: pop 0.1s ease;
+    }
+
+    .tile.revealed {
+      animation: flip 0.5s ease forwards;
+      border-color: transparent;
+    }
+
+    .tile.correct {
+      --flip-color: var(--correct);
+    }
+
+    .tile.present {
+      --flip-color: var(--present);
+    }
+
+    .tile.absent {
+      --flip-color: var(--absent);
+    }
+
+    @keyframes flip {
+      0% {
+        transform: rotateX(0);
+        background: var(--surface);
+      }
+
+      49% {
+        transform: rotateX(90deg);
+        background: var(--surface);
+      }
+
+      50% {
+        transform: rotateX(90deg);
+        background: var(--flip-color);
+        color: white;
+      }
+
+      100% {
+        transform: rotateX(0);
+        background: var(--flip-color);
+        color: white;
+      }
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(0.9);
+      }
+
+      50% {
+        transform: scale(1.12);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20%,
+      60% {
+        transform: translateX(-6px);
+      }
+
+      40%,
+      80% {
+        transform: translateX(6px);
+      }
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      30% {
+        transform: translateY(-16px);
+      }
+
+      60% {
+        transform: translateY(-8px);
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .row.shake {
+      animation: shake 0.4s ease;
+    }
+
+    .tile.bounce {
+      animation: bounce 0.5s ease;
+    }
+
+    /* ── KEYBOARD ── */
+    #keyboard {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      flex-shrink: 0;
+      margin-top: auto;
+    }
+
+    .key-row {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .key {
+      background: var(--key-bg);
+      color: var(--key-text);
+      border: none;
+      border-radius: 8px;
+      height: 52px;
+      min-width: 30px;
+      flex: 1;
+      max-width: 42px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      transition: background 0.15s;
+    }
+
+    .key:active {
+      transform: scale(0.92);
+    }
+
+    .key.wide {
+      max-width: 64px;
+      font-size: 12px;
+    }
+
+    .key.correct {
+      background: var(--correct) !important;
+      color: white;
+      box-shadow: 0 0 8px rgba(29, 185, 84, 0.4);
+    }
+
+    .key.present {
+      background: var(--present) !important;
+      color: white;
+      box-shadow: 0 0 8px rgba(245, 166, 35, 0.4);
+    }
+
+    .key.absent {
+      background: #111520 !important;
+      color: #3a3f5c !important;
+      border: 1px solid #1a1f35;
+      cursor: default;
+    }
+
+    /* ── RESULT MODAL ── */
+    #result-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 39;
+    }
+
+    #result-overlay.show {
+      display: block;
+    }
+
+    #result-panel {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) translateY(20px);
+      z-index: 40;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 24px;
+      width: min(420px, 92vw);
+      max-height: 90vh;
+      overflow-y: auto;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #result-panel.show {
+      display: flex;
+      animation: resultPop 0.4s ease forwards;
+    }
+
+    @keyframes resultPop {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0);
+      }
+    }
+
+    #result-title {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 32px;
+      letter-spacing: 2px;
+    }
+
+    #result-title.win {
+      color: var(--correct);
+    }
+
+    #result-title.lose {
+      color: #f44336;
+    }
+
+    #result-word {
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    #result-word strong {
+      color: var(--text);
+    }
+
+    #win-fact {
+      font-size: 13px;
+      color: #bdc1e0;
+      line-height: 1.6;
+      background: rgba(124, 77, 255, 0.1);
+      border: 1px solid rgba(124, 77, 255, 0.25);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-style: italic;
+      display: none;
+      text-align: left;
+    }
+
+    #win-fact.show {
+      display: block;
+      animation: fadeUp 0.5s ease;
+    }
+
+    #win-fact .fact-label {
+      display: block;
+      font-style: normal;
+      font-weight: 800;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .new-game-btn {
+      background: linear-gradient(135deg, #7c4dff, #e040fb);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      padding: 14px 36px;
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 20px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 20px rgba(124, 77, 255, 0.4);
+    }
+
+    .new-game-btn:active {
+      transform: scale(0.96);
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 20px;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat .num {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 28px;
+      color: var(--accent);
+      display: block;
+    }
+
+    .stat .lbl {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    /* ── HELP MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      max-width: 400px;
+      width: 100%;
+      position: relative;
+      max-height: 85vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal h2 {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 22px;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      color: var(--accent);
+    }
+
+    .modal p,
+    .modal li {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #bdc1e0;
+    }
+
+    .modal ul {
+      padding-left: 18px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 8px;
+    }
+
+    .example-tiles {
+      display: flex;
+      gap: 5px;
+      margin: 10px 0;
+    }
+
+    .ex-tile {
+      width: 38px;
+      height: 38px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Luckiest Guy', cursive;
+      font-size: 18px;
+      color: white;
+    }
+
+    .ex-tile.c {
+      background: var(--correct);
+    }
+
+    .ex-tile.p {
+      background: var(--present);
+    }
+
+    .ex-tile.a {
+      background: var(--absent);
+    }
+
+    .ex-tile.n {
+      background: var(--key-bg);
+      border: 2px solid var(--border);
+      color: var(--text);
+    }
+
+    /* ── GLOBAL MOBILE FIXES ── */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tile,
+    .key,
+    .icon-btn,
+    .len-btn,
+    .new-game-btn {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Tile size by word length */
+    #board[data-len="4"] {
+      --tile-size: 66px;
+    }
+
+    #board[data-len="5"] {
+      --tile-size: 58px;
+    }
+
+    @media (max-width: 430px) {
+      #board[data-len="4"] {
+        --tile-size: clamp(48px, 14vw, 62px);
+      }
+
+      #board[data-len="5"] {
+        --tile-size: clamp(40px, 12vw, 54px);
+      }
+    }
+
+    @media (min-width: 768px) {
+      #board[data-len="4"] {
+        --tile-size: 76px;
+      }
+
+      #board[data-len="5"] {
+        --tile-size: 68px;
+      }
+    }
+
+    /* ── IPHONE (portrait) ── */
+    @media (max-width: 430px) {
+      :root {
+        --tile-size: clamp(42px, 12.5vw, 56px);
+        --gap: 5px;
+        --header-height: 54px;
+      }
+
+      main {
+        padding: 6px 8px;
+        padding-bottom: max(6px, env(safe-area-inset-bottom, 6px));
+        gap: 5px;
+      }
+
+      .logo {
+        font-size: 22px;
+      }
+
+      .logo span {
+        font-size: 10px;
+      }
+
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+      }
+
+      .word-length-selector {
+        font-size: 11px;
+        gap: 5px;
+      }
+
+      .len-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+
+      #word-counter {
+        font-size: 10px;
+      }
+
+      .hint-bar {
+        font-size: 11px;
+        min-height: 14px;
+      }
+
+      .tile {
+        font-size: clamp(18px, 5.5vw, 28px);
+        border-radius: 8px;
+      }
+
+      #keyboard {
+        gap: 5px;
+      }
+
+      .key-row {
+        gap: 4px;
+      }
+
+      .key {
+        height: clamp(40px, 11vw, 50px);
+        min-width: 26px;
+        max-width: 36px;
+        font-size: 13px;
+        border-radius: 6px;
+      }
+
+      .key.wide {
+        max-width: 54px;
+        font-size: 11px;
+      }
+
+      #result-panel {
+        padding: 18px 16px;
+        gap: 10px;
+      }
+
+      #result-title {
+        font-size: 26px;
+      }
+
+      #result-word {
+        font-size: 15px;
+      }
+
+      .stat .num {
+        font-size: 22px;
+      }
+
+      .new-game-btn {
+        font-size: 16px;
+        padding: 11px 28px;
+      }
+
+      #win-fact {
+        font-size: 12px;
+      }
+    }
+
+    /* ── IPAD (768px+) ── */
+    @media (min-width: 768px) {
+      :root {
+        --tile-size: 74px;
+        --gap: 8px;
+        --header-height: 68px;
+      }
+
+      header {
+        max-width: 600px;
+        padding: 0 24px;
+      }
+
+      main {
+        max-width: 600px;
+        padding: 14px 16px 10px;
+        gap: 12px;
+      }
+
+      .logo {
+        font-size: 34px;
+      }
+
+      .logo span {
+        font-size: 14px;
+      }
+
+      .icon-btn {
+        width: 46px;
+        height: 46px;
+        font-size: 22px;
+      }
+
+      #hint-btn {
+        width: 46px;
+        height: 46px;
+        font-size: 22px;
+      }
+
+      .tile {
+        font-size: 40px;
+        border-radius: 12px;
+      }
+
+      .key {
+        height: 66px;
+        min-width: 44px;
+        max-width: 56px;
+        font-size: 18px;
+        border-radius: 10px;
+      }
+
+      .key.wide {
+        max-width: 84px;
+        font-size: 14px;
+      }
+
+      #keyboard {
+        gap: 8px;
+      }
+
+      .key-row {
+        gap: 6px;
+      }
+
+      #result-panel {
+        width: min(500px, 90vw);
+      }
+
+      #result-title {
+        font-size: 36px;
+      }
+
+      .stat .num {
+        font-size: 32px;
+      }
+
+      .new-game-btn {
+        font-size: 22px;
+        padding: 16px 42px;
+      }
+
+      .word-length-selector {
+        font-size: 14px;
+      }
+
+      .len-btn {
+        padding: 8px 18px;
+        font-size: 15px;
+      }
+
+      #word-counter {
+        font-size: 12px;
+      }
+
+      .hint-bar {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="toast"></div>
+
+  <header>
+    <div class="logo">
+      Parkle
+      <span>Unlimited</span>
+    </div>
+    <div class="header-btns">
+      <button class="icon-btn" id="answer-btn" title="Peek at the answer">👁️</button>
+      <button class="icon-btn" id="hint-btn" title="Ask the Magic Mirror for a clue">✨</button>
+      <button class="icon-btn" id="help-btn" title="How to play">?</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="word-length-selector">
+      Word length:
+      <button class="len-btn active" data-len="4">4</button>
+      <button class="len-btn" data-len="5">5</button>
+      <button class="len-btn" data-len="both">Both</button>
+    </div>
+    <div id="word-counter"></div>
+
+    <div class="hint-bar" id="hint-bar">
+      <span id="hint-text"></span>
+    </div>
+    <div id="giveup-bar">
+      <button id="giveup-btn">🏳️ Give Up</button>
+    </div>
+
+    <div id="board"></div>
+
+    <div id="result-overlay"></div>
+    <div id="result-panel">
+      <div id="result-title"></div>
+      <div id="result-word"></div>
+      <div id="win-fact"></div>
+      <div class="stats-row">
+        <div class="stat"><span class="num" id="s-played">0</span><span class="lbl">Played</span></div>
+        <div class="stat"><span class="num" id="s-wins">0</span><span class="lbl">Wins</span></div>
+        <div class="stat"><span class="num" id="s-streak">0</span><span class="lbl">Streak</span></div>
+      </div>
+      <button class="new-game-btn" id="new-game-btn">✨ New Word</button>
+    </div>
+
+    <div id="keyboard"></div>
+  </main>
+
+  <!-- Answer Modal -->
+  <div class="modal-overlay" id="answer-modal">
+    <div class="modal" style="text-align: center;">
+      <button class="modal-close" id="answer-close">✕</button>
+      <h2>Secret Word</h2>
+      <p id="answer-display"
+        style="font-family: 'Luckiest Guy', cursive; font-size: 32px; color: var(--correct); letter-spacing: 2px; margin-top: 20px;">
+      </p>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="help-modal">
+    <div class="modal">
+      <button class="modal-close" id="help-close">✕</button>
+      <h2>How to Play</h2>
+      <ul>
+        <li>Guess the <strong>Disney-related word</strong> in 6 attempts.</li>
+        <li>Words are <strong>4 or 5 letters</strong>.</li>
+        <li>Each guess must be a valid word.</li>
+        <li>Tap <strong>🪞 Magic Mirror</strong> anytime for an AI-powered clue.</li>
+      </ul>
+      <br>
+      <p><strong>Color guide:</strong></p>
+      <div class="example-tiles">
+        <div class="ex-tile c">E</div>
+        <div class="ex-tile n">P</div>
+        <div class="ex-tile n">C</div>
+        <div class="ex-tile n">O</div>
+        <div class="ex-tile n">T</div>
+      </div>
+      <p><strong>E</strong> is in the correct spot.</p>
+      <br>
+      <div class="example-tiles">
+        <div class="ex-tile n">W</div>
+        <div class="ex-tile p">A</div>
+        <div class="ex-tile n">L</div>
+        <div class="ex-tile n">T</div>
+      </div>
+      <p><strong>A</strong> is in the word but wrong spot.</p>
+      <br>
+      <div class="example-tiles">
+        <div class="ex-tile n">G</div>
+        <div class="ex-tile n">O</div>
+        <div class="ex-tile a">O</div>
+        <div class="ex-tile n">F</div>
+        <div class="ex-tile n">Y</div>
+      </div>
+      <p><strong>O</strong> (middle) is not in the word.</p>
+    </div>
+  </div>
+
+  <script>
+    // ===================== WORD LISTS =====================
+    const DISNEY_WORDS_4 = [
+      // Characters
+      "WALT", "CHIP", "DALE", "ELSA", "ANNA", "OLAF", "HANS", "SVEN", "LILO", "BOLT",
+      "REMY", "IAGO", "JUDY", "NICK", "DORY", "GILL", "MIKE", "NEMO", "HUGO", "CLEO",
+      "PAIN", "ZEUS", "HERA", "FINN", "JAKE", "FLIT", "BEAR", "DUCK", "WOLF", "LION",
+      "FROG", "BIRD", "JOHN", "DUKE", "GOOF", "BOGO", "REED", "HOLT", "CODY", "PONG",
+      "TUCK", "MOLE", "ROCK", "TICK", "MAID", "PIKE", "BOOG", "GALE", "KHAN", "SHAN",
+      "KALA", "TERK", "JANE", "ERIC", "MAUI", "HIRO", "FRED", "GOGO", "YAMA",
+      "BING", "JOCK", "RUTT", "TUKE", "KODA", "KENAI",
+      // Films & Shows
+      "SOUL", "LUCA", "COCO", "MULAN", "MOANA",
+      // Places & Things
+      "STAR", "MOON", "WAND", "GOLD", "ROSE", "RUBY", "TEAL", "DALE", "VALE",
+      "ISLE", "MIST", "TIDE", "WAVE", "LAKE", "PEAK", "REEF", "SAND", "WISH", "HOPE",
+      "LOVE", "SONG", "RING", "HELM", "VEIL", "CORD", "AURA", "ZEAL", "DUST", "MYTH",
+      "TALE", "LORE", "FATE", "CAPE", "BOOT", "JADE", "OPAL", "HALL", "COVE", "GLEN",
+      // Park foods & terms
+      "HOPS", "DOLE", "BRAT", "BUNS", "BREW", "CORN", "GROG", "TACO", "FUDGE",
+      "BOBA", "COLA", "LIME", "PLUM", "PEAR", "MINT", "BRIE", "BEET", "OKRA",
+      "TART", "BAKE", "CAFE", "DINE", "RIDE", "LINE", "PARK", "PASS", "SHOW",
+      "TRAM", "TOUR", "GATE", "MAP", "BAND", "MEET", "SNAP", "WAND", "CART",
+      "WAIT", "FAST", "GLOW", "GIFT", "SHOP", "NOOK", "DOCK", "PIER", "POOL"
+    ];
+
+    const DISNEY_WORDS_5 = [
+      // Classic Characters
+      "GOOFY", "PLUTO", "DUMBO", "BAMBI", "FLORA", "FAUNA", "ARIEL", "BELLE", "BEAST",
+      "GENIE", "SIMBA", "TIMON", "PUMBA", "NALA", "MOANA", "TIANA", "MERIDA",
+      "MULAN", "MUSHU", "SHANG", "MEEKO", "PERCY", "FLIT", "PONGO", "PENNY", "PATCH",
+      "ROLLY", "BALOO", "ALICE", "WENDY", "PETER", "TIGER", "KANGA", "DOPEY", "HAPPY",
+      "WITCH",
+      // Villains
+      "JAFAR", "HADES", "PANIC", "HYENA", "LOTSO", "SHERE", "KUZCO", "YZMA", "KRONK",
+      // Pixar Characters
+      "WOODY", "JESSE", "SULLY", "RILEY", "ANGER", "BLOAT", "PEACH", "CORAL", "DANTE",
+      "PACHA", "CHACA", "LOUIE", "LOUIS", "LUISA",
+      // Modern Characters
+      "MAUI", "FLYNN", "MERIDA", "ANGUS", "WISPS",
+      "RALPH", "FELIX", "HONEY", "BAYMAX",
+      "FLASH", "GAZELLE",
+      // Parks & Places
+      "EPCOT", "BATUU", "BAYOU", "SPACE", "MAGIC", "CROWN",
+      // Supporting cast
+      "CINDY", "ANITA", "LUCKY", "DAISY", "MINNIE", "HUEY", "DEWEY", "LOUIE",
+      "WALLE", "JESSE", "CHUNK", "AKELA", "RIDER", "HELEN", "EDNA",
+      "MATER", "CHICK", "DORY", "SHARK", "SKINNER", "COLETTE",
+      "MIKE", "SULLY", "RANDY", "ROZ", "REX", "HAMM", "SLINKY",
+      "TIMON", "PUMBA", "RAFIKI", "ZAZU", "NALA", "MERYL", "MEEKO",
+      // Park foods
+      "CHURRO", "PRETZEL", "WAFFLE", "BEIGNET",
+      "ELOTE", "FUDGE", "TAFFY", "JERKY", "CANDY", "CREPE", "DONUT", "TATER",
+      "NACHO", "FRIES", "POPCORN", "COCOA", "CIDER", "LEMON", "BERRY", "MANGO",
+      "GUMBO", "JAMBO", "TOAST", "BREAD", "HONEY", "SUGAR", "MAPLE", "CREAM",
+      "FUNNEL", "SLUSH", "PUNCH", "FLOAT", "SHAKE", "LATTE", "MOCHA", "CREME",
+      "GRAVY", "SAUCE", "SYRUP", "GLAZE", "SALSA", "GUAVA", "PAPAYA", "PEACH",
+      // Park terms
+      "QUEUE", "GUEST", "MAGIC", "PHOTO", "FLASH", "RIDER", "SQUAD", "TROOP",
+      "SCOUT", "STAFF", "USHER", "PLAZA", "DEPOT", "MANOR", "TRAIL", "SHOWS",
+      "OASIS", "GROVE", "LAGOON", "BAZAAR", "PLAZA", "VISTA", "FALLS",
+      "PEAKS", "CREEK", "BAYOU", "HAVEN", "REALM", "GATES", "LANES", "LODGE"
+    ].filter(w => w.length === 5 && !w.includes(' '));
+
+    // Flatten unique valid words
+    const ALL_4 = [...new Set(DISNEY_WORDS_4.filter(w => w.length === 4))];
+    const ALL_5 = [...new Set(DISNEY_WORDS_5.filter(w => w.length === 5))];
+
+    // Supplementary common English words for valid guesses (partial)
+    const COMMON_5 = ["ABOUT", "ABOVE", "ABUSE", "ACTOR", "ACUTE", "ADMIT", "ADOPT", "ADULT", "AFTER", "AGAIN", "AGENT", "AGREE", "AHEAD", "ALARM", "ALBUM", "ALERT", "ALIKE", "ALIGN", "ALIVE", "ALLAY", "ALLOW", "ALONE", "ALONG", "ALOOF", "ALOUD", "ALPHA", "ALTER", "ANGEL", "ANGLE", "ANGRY", "ANKLE", "ANNEX", "ANNOY", "ANTIC", "APART", "APPLE", "APPLY", "ARENA", "ARGUE", "ARISE", "ARMOR", "AROMA", "AROSE", "ARRAY", "ARSON", "ASIDE", "ASKED", "ATLAS", "ATONE", "ATTIC", "AUDIO", "AUDIT", "AVOID", "AWAKE", "AWARD", "AWARE", "AWFUL", "BADLY", "BAKED", "BAKER", "BARGE", "BASED", "BASIC", "BASIS", "BEACH", "BEGAN", "BEGIN", "BEING", "BELOW", "BENCH", "BIRTH", "BISON", "BLANK", "BLAST", "BLAZE", "BLEND", "BLESS", "BLISS", "BLOCK", "BLOOD", "BLOOM", "BOARD", "BONUS", "BOOST", "BOUND", "BRAIN", "BRAND", "BRAVE", "BREAD", "BREAK", "BREED", "BRIDE", "BRIEF", "BRING", "BROAD", "BROKE", "BROOK", "BRUSH", "BUILT", "BURST", "BUYER", "CABIN", "CABLE", "CAMEL", "CANDY", "CARGO", "CARRY", "CATCH", "CAUSE", "CEASE", "CHAIN", "CHAIR", "CHALK", "CHAOS", "CHEAP", "CHECK", "CHESS", "CHEST", "CHIEF", "CHILD", "CHINA", "CHUNK", "CIVIL", "CLAMP", "CLANG", "CLASH", "CLASS", "CLEAN", "CLEAR", "CLERK", "CLICK", "CLIFF", "CLIMB", "CLOCK", "CLOSE", "CLOTH", "CLOUD", "CLOWN", "COACH", "COAST", "COLOR", "COMET", "COUNT", "COVER", "CRACK", "CRAFT", "CRAMP", "CRANE", "CRASH", "CRAWL", "CRAZY", "CREEK", "CRISP", "CROSS", "CROWD", "CROWN", "CRUEL", "CRUSH", "CURVE", "DANCE", "DEATH", "DECAY", "DELAY", "DENSE", "DEPOT", "DEVIL", "DIRTY", "DIZZY", "DODGE", "DOUBT", "DOUGH", "DRAFT", "DRAIN", "DRAMA", "DRAWN", "DRIVE", "DROVE", "EARNS", "EARTH", "EIGHT", "ELECT", "ELITE", "EMPTY", "ENEMY", "ENJOY", "ENTER", "ENTRY", "EQUAL", "ESSAY", "EVADE", "EVERY", "EXACT", "EXIST", "EXTRA", "FABLE", "FAIRY", "FAITH", "FALSE", "FANCY", "FEAST", "FENCE", "FETCH", "FEVER", "FIELD", "FIFTH", "FIFTY", "FIGHT", "FINAL", "FIRST", "FIXED", "FLAME", "FLAIR", "FLASH", "FLEET", "FLESH", "FLOAT", "FLOOD", "FLOOR", "FLOUR", "FLUID", "FOCAL", "FORGE", "FORTH", "FORUM", "FOUND", "FRANC", "FRONT", "FROST", "FROZE", "FULLY", "FUNNY", "GHOST", "GIANT", "GIVEN", "GLASS", "GLEAM", "GLOAT", "GLOBE", "GLOOM", "GLOSS", "GLOVE", "GOING", "GRACE", "GRADE", "GRAND", "GRANT", "GRASP", "GRASS", "GRAVE", "GREAT", "GREEN", "GREET", "GRIEF", "GROAN", "GROSS", "GROUP", "GROVE", "GROWN", "GUARD", "GUIDE", "GUILD", "GUILE", "GUISE", "GULCH", "GUSTO", "GAVEL", "GLYPH", "GNOME", "GRAIN", "GIMP", "GRAIL", "HAIRY", "HALVE", "HANDY", "HARSH", "HASTE", "HAUNT", "HAVEN", "HEART", "HEAVY", "HORSE", "HOTEL", "HOUSE", "HUMAN", "HUMOR", "HURRY", "IDEAL", "IMAGE", "IMPLY", "INBOX", "INDIE", "INFER", "INNER", "INPUT", "INTER", "ISSUE", "IVORY", "JUDGE", "JUICE", "JUICY", "JUNKY", "KNEEL", "KNIFE", "KNOCK", "KNOWN", "LARGE", "LATER", "LAUGH", "LAYER", "LEACH", "LEARN", "LEASE", "LEAST", "LEAVE", "LEGAL", "LEVEL", "LIGHT", "LIMIT", "LOCAL", "LODGE", "LOWER", "LUCKY", "LUNAR", "MAGIC", "MAJOR", "MAKER", "MARCH", "MERGE", "MERIT", "METAL", "MODEL", "MONTH", "MORAL", "MOTIF", "MOUNT", "MUSIC", "NAVAL", "NIGHT", "NOBLE", "NORTH", "NOVEL", "NURSE", "NYMPH", "OCCUR", "OFTEN", "OLDEN", "OTHER", "OUTER", "OVARY", "OVEN", "OWNER", "PAINT", "PANSY", "PAPER", "PATCH", "PAUSE", "PEACE", "PEARL", "PENAL", "PESKY", "PHASE", "PILOT", "PINCH", "PITCH", "PIXEL", "PLACE", "PLAIN", "PLANK", "PLANT", "PLATE", "PLAZA", "PLANT", "PLEAD", "PLUCK", "POINT", "POLAR", "PORCH", "POTENT", "POWER", "PRICE", "PRIME", "PRINT", "PRIZE", "PROBE", "PRONG", "PROOF", "PROSE", "PROUD", "PROVE", "PROXY", "PULSE", "QUERY", "QUEEN", "QUICK", "QUIET", "QUOTA", "QUITE", "QUOTE", "RAISE", "RALLY", "RANGE", "RAPID", "RATIO", "REACH", "READY", "REALM", "RECAP", "REIGN", "RELAY", "REPAY", "REPLY", "RESET", "RIDGE", "RIVAL", "RIVER", "ROBOT", "ROCKY", "ROOMY", "ROUTE", "ROYAL", "RUGBY", "RULER", "RURAL", "RUSTY", "SAFER", "SAINT", "SCAMP", "SCALP", "SCARF", "SCENE", "SCONE", "SCORE", "SCOUT", "SCREW", "SEIZE", "SENSE", "SERVE", "SEVEN", "SHADE", "SHAME", "SHAPE", "SHARE", "SHARP", "SHELF", "SHELL", "SHIFT", "SHINE", "SHIRE", "SHORE", "SHORT", "SHOUT", "SIGHT", "SINCE", "SIXTH", "SIXTY", "SKILL", "SLATE", "SLAVE", "SLEEP", "SLEET", "SLEW", "SLICE", "SLIDE", "SLOPE", "SMALL", "SMART", "SMILE", "SMOKE", "SNACK", "SNAKE", "SNIFF", "SOLAR", "SOLID", "SOLVE", "SONIC", "SOUND", "SOUTH", "SPACE", "SPARE", "SPEAK", "SPEND", "SPICE", "SPILL", "SPINE", "SPOKE", "SPOON", "SPORT", "SQUAD", "SQUARE", "STAFF", "STAGE", "STAIN", "STAKE", "STALL", "STAND", "STARK", "START", "STATE", "STEAM", "STEEL", "STERN", "STIFF", "STILL", "STOCK", "STONE", "STOOD", "STORE", "STORM", "STORY", "STRAY", "STRIP", "STUCK", "STUDY", "STUFF", "STYLE", "SUGAR", "SUITE", "SUNNY", "SUPER", "SURGE", "SWAMP", "SWEAR", "SWEEP", "SWEET", "SWEPT", "SWIFT", "SWING", "SWORD", "TABLE", "TASTE", "TAXES", "TEACH", "TEETH", "TERMS", "THANK", "THEME", "THICK", "THING", "THINK", "THIRD", "THORN", "THOSE", "THREE", "THROE", "THREW", "TIGHT", "TIMER", "TODAY", "TRACE", "TRACK", "TRADE", "TRAIL", "TRAIN", "TRAMP", "TRASH", "TRIAL", "TRICK", "TRIED", "TROOP", "TRUCK", "TRUTH", "TULIP", "TUPLE", "TWIST", "TYLER", "ULTRA", "UNCLE", "UNDER", "UNIFY", "UNTIL", "UPPER", "UPSET", "URBAN", "USAGE", "USING", "USUAL", "VALID", "VALUE", "VERSE", "VIRAL", "VITAL", "VOCAL", "VOICE", "VOTED", "VOWED", "VULNS", "WASTE", "WATCH", "WATER", "WEAVE", "WEDGE", "WEIGH", "WEIRD", "WHEAT", "WHEEL", "WHERE", "WHILE", "WHITE", "WHOLE", "WHOSE", "WIELD", "WITCH", "WITTY", "WOMEN", "WORLD", "WORRY", "WORSE", "WORST", "WORTH", "WOULD", "WOUND", "WRITE", "WROTE", "YOUNG", "YOUTH", "ZEROS", "ZONES"];
+
+    const COMMON_4 = ["ABLE", "ACHE", "ACID", "ACRE", "AGES", "AIDE", "AIMS", "ALSO", "AMID", "AMPS", "AREA", "ARMS", "ARTS", "ASKS", "ATOM", "AUNT", "AUTO", "BABY", "BACK", "BAIT", "BALE", "BALL", "BANK", "BARK", "BARN", "BARS", "BASE", "BASH", "BASK", "BATS", "BEAD", "BEAM", "BEAN", "BEAR", "BEAT", "BEDS", "BEEF", "BEEN", "BEER", "BELT", "BEST", "BIKE", "BILL", "BITE", "BLEW", "BLOB", "BLOT", "BLOW", "BLUE", "BLUR", "BOAR", "BOAT", "BONE", "BOOK", "BOOM", "BORE", "BORN", "BOSS", "BOTH", "BOWL", "BRAG", "BRAN", "BRAW", "BRAY", "BREW", "BRIG", "BRIM", "BROW", "BUFF", "BULK", "BULL", "BUMP", "BUNK", "BUNT", "BURN", "BUSH", "BUSY", "CALL", "CALM", "CAME", "CANE", "CAPE", "CARE", "CART", "CASE", "CASH", "CAST", "CAVE", "CELL", "CENT", "CHEF", "CHIN", "CHIP", "CHOP", "CHUG", "CITY", "CLAM", "CLAP", "CLEW", "CLIP", "CLOP", "CLUB", "CLUE", "COAL", "CODE", "COIL", "COIN", "COLD", "COPE", "COPY", "CORD", "CORE", "CORK", "CORN", "COST", "COZY", "CUBE", "CULT", "CUPS", "CURL", "CURB", "CUTE", "DARK", "DART", "DATA", "DAWN", "DAYS", "DEAD", "DEAF", "DEAL", "DEAN", "DEAR", "DECK", "DEED", "DEEP", "DEFT", "DELI", "DEMO", "DENY", "DIET", "DIME", "DIRE", "DISK", "DIVE", "DOCK", "DOES", "DOME", "DONE", "DOOR", "DOSE", "DOTE", "DOVE", "DOWN", "DRAW", "DRIP", "DROP", "DRUM", "DUAL", "DUEL", "DUMP", "DUSK", "DUST", "DUTY", "DYES", "EACH", "EARL", "EARN", "EASE", "EDGE", "EDIT", "ENDS", "EVEN", "EVER", "EVIL", "EXAM", "EYES", "FACE", "FADE", "FAIL", "FALL", "FAME", "FARE", "FARM", "FAST", "FEET", "FELL", "FELT", "FILM", "FIRE", "FIRM", "FLAT", "FLEW", "FLEX", "FLIP", "FLAW", "FLIT", "FLOG", "FLOW", "FOAM", "FOIL", "FOLK", "FOND", "FONT", "FOOT", "FORE", "FORK", "FORM", "FORT", "FOUL", "FOUR", "FREE", "FROG", "FROM", "FUEL", "FULL", "FUSE", "GALE", "GAME", "GANG", "GAVE", "GEAR", "GEMS", "GIST", "GIVE", "GLAD", "GOAL", "GOES", "GOWN", "GRAB", "GRAY", "GREW", "GRIM", "GRIN", "GRIP", "GROW", "GULF", "GUST", "GUYS", "HACK", "HALL", "HALT", "HAND", "HANG", "HARD", "HARM", "HASH", "HATE", "HAVE", "HEAL", "HEAP", "HELD", "HELM", "HELP", "HERB", "HERO", "HIGH", "HIKE", "HILL", "HINT", "HOLE", "HOME", "HOOD", "HOOF", "HOOP", "HORN", "HOST", "HOUR", "HULL", "HUNT", "HURT", "ICON", "IDLE", "ILLS", "INCH", "IRON", "ITEM", "JOIN", "JOKE", "JUMP", "JUST", "KEEN", "KEPT", "KILL", "KIND", "KING", "KNIT", "KNOW", "LACE", "LACK", "LAID", "LAIR", "LAMB", "LAMP", "LAND", "LANE", "LAST", "LATE", "LAWN", "LEAD", "LEAN", "LEND", "LENS", "LIFE", "LIFT", "LIKE", "LIME", "LINE", "LINK", "LIST", "LIVE", "LOAD", "LOFT", "LOGS", "LONG", "LOOK", "LORD", "LOSE", "LOSS", "LOST", "LOUD", "LOVE", "LUSH", "MANE", "MANY", "MARK", "MASK", "MAST", "MATH", "MEAL", "MEAN", "MEAT", "MEET", "MELT", "MESH", "MILE", "MILL", "MIND", "MINE", "MINT", "MISS", "MOAN", "MODE", "MOOD", "MOSS", "MOST", "MOVE", "MUCH", "MUST", "MYTH", "NAIL", "NAME", "NAVY", "NEAR", "NECK", "NEED", "NEWT", "NEXT", "NICE", "NINE", "NODE", "NONE", "NOON", "NORM", "NOSE", "NOTE", "OATH", "OBEY", "ONLY", "OPEN", "OWNS", "ONCE", "OVER", "OVER", "PACE", "PACK", "PAGE", "PAIL", "PAIR", "PALM", "PARK", "PART", "PASS", "PATH", "PAVE", "PEAR", "PEEL", "PEEL", "PEER", "PENS", "PICK", "PILE", "PINE", "PIPE", "PLAN", "PLAY", "PLEA", "PLOW", "PLOT", "PLUG", "PLUM", "POEM", "POET", "POLE", "POLL", "POND", "POOL", "POOP", "POOR", "POSE", "POST", "POUR", "PREY", "PROD", "PULL", "PUMP", "PURE", "PUSH", "PUTS", "RACK", "RAGE", "RAMP", "RAMP", "RASH", "RASP", "RATE", "RAVE", "READ", "REIN", "RENT", "REST", "RICE", "RICH", "RIDE", "RIFE", "RIND", "RING", "RIPE", "RISE", "ROAD", "ROAM", "ROAR", "ROBE", "ROLE", "ROOF", "ROOM", "ROOT", "ROPE", "RUST", "RUTS", "SAFE", "SAGA", "SAKE", "SALE", "SALT", "SAME", "SAND", "SANE", "SANG", "SAVE", "SEAL", "SEAM", "SECT", "SEED", "SEEK", "SEEM", "SEEN", "SELF", "SELL", "SHED", "SHIN", "SHIP", "SHOE", "SHOT", "SHOW", "SICK", "SIGN", "SILK", "SING", "SINK", "SITE", "SKID", "SKIN", "SKIP", "SKULL", "SLAP", "SLIM", "SLIP", "SLIT", "SLOB", "SLOP", "SLOT", "SLOW", "SLUG", "SOAK", "SOAR", "SOCK", "SOIL", "SOLO", "SOME", "SORE", "SORT", "SOUL", "SOUP", "SOUR", "SPAN", "SPAR", "SPIN", "SPIT", "SPOT", "SPUR", "STAY", "STEM", "STEP", "STEW", "STIR", "STOP", "STUB", "STUN", "SUCH", "SUIT", "SUNG", "SUNK", "SURF", "SWAY", "TAIL", "TAKE", "TALL", "TANK", "TAPE", "TAUT", "TEAM", "TEAR", "TELL", "TEND", "TENT", "TEST", "TEXT", "THAN", "THEM", "THEN", "THEY", "TIDE", "TIED", "TILE", "TILL", "TILT", "TIME", "TINY", "TOAD", "TOIL", "TOLD", "TOLL", "TOME", "TONG", "TOOL", "TOPS", "TORN", "TOSS", "TOUR", "TOWN", "TRAP", "TRAY", "TREE", "TRIM", "TRIP", "TRUE", "TUBE", "TUNE", "TURN", "TUSK", "TWIN", "TYPE", "UGLY", "UNIT", "UNTO", "UPON", "USED", "VAIN", "VALE", "VAST", "VEIL", "VENT", "VERY", "VIEW", "VINE", "VISA", "VOID", "VOTE", "WADE", "WAGE", "WAKE", "WALK", "WALL", "WANT", "WARD", "WARM", "WARP", "WARS", "WARY", "WAVE", "WEAK", "WEED", "WELL", "WENT", "WERE", "WEST", "WHAT", "WHEN", "WHIP", "WIDE", "WIFE", "WILL", "WILT", "WIND", "WINE", "WING", "WINK", "WISE", "WISH", "WITH", "WOLF", "WORD", "WORK", "WORM", "WORN", "WRAP", "WREN", "WRIT", "YELL", "YOUR", "YUCK", "ZEAL", "ZINC", "ZONE", "ZOOM"];
+
+    // ===================== GAME STATE =====================
+    const MAX_GUESSES = 6;
+    let currentWord = '';
+    let wordLength = 4;
+    let lengthMode = '4'; // '4', '5', 'both'
+    let currentGuess = [];
+    let guesses = [];
+    let gameOver = false;
+    let keyStates = {};
+    let stats = JSON.parse(localStorage.getItem('parkle_stats') || '{"played":0,"wins":0,"streak":0,"maxStreak":0}');
+
+    // Shuffle queue — no repeats until all words played
+    let wordQueue = [];
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildQueue() {
+      let pool;
+      if (lengthMode === '4') pool = ALL_4;
+      else if (lengthMode === '5') pool = ALL_5;
+      else pool = [...ALL_4, ...ALL_5];
+      wordQueue = shuffle(pool);
+    }
+
+    function pickWord() {
+      if (wordQueue.length === 0) buildQueue(); // refill when exhausted
+      return wordQueue.pop();
+    }
+
+    function updateCounter() {
+      const total = lengthMode === '4' ? ALL_4.length : lengthMode === '5' ? ALL_5.length : ALL_4.length + ALL_5.length;
+      const remaining = wordQueue.length;
+      document.getElementById('word-counter').textContent = `${remaining} of ${total} words remaining`;
+    }
+
+    // Cache so we don't call Groq twice for the same word
+    const validationCache = {};
+
+    function isKnownValid(word) {
+      const upper = word.toUpperCase();
+      const len = upper.length;
+      if (len === 4) return ALL_4.includes(upper) || COMMON_4.includes(upper);
+      if (len === 5) return ALL_5.includes(upper) || COMMON_5.includes(upper);
+      return false;
+    }
+
+    async function isValidGuess(word) {
+      const upper = word.toUpperCase();
+      if (isKnownValid(upper)) return true;
+      if (upper in validationCache) return validationCache[upper];
+
+      // Ask Groq if it's a real English word
+      try {
+        const response = await fetch('/parkle/proxy.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: `Is "${upper}" a real English word? Reply with only YES or NO, nothing else.`
+          })
+        });
+        const data = await response.json();
+        const answer = (data.text || '').trim().toUpperCase().startsWith('YES');
+        validationCache[upper] = answer;
+        return answer;
+      } catch (e) {
+        // If Groq fails, allow the word rather than blocking the player
+        return true;
+      }
+    }
+
+    // ===================== UI =====================
+    function buildBoard() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      for (let r = 0; r < MAX_GUESSES; r++) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.id = `row-${r}`;
+        for (let c = 0; c < wordLength; c++) {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          tile.id = `tile-${r}-${c}`;
+          row.appendChild(tile);
+        }
+        board.appendChild(row);
+      }
+      // Tile size handled by CSS — just mark word length on the board
+      document.getElementById('board').dataset.len = wordLength;
+    }
+
+    function buildKeyboard() {
+      const rows = [['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'], ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'], ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '⌫']];
+      const kb = document.getElementById('keyboard');
+      kb.innerHTML = '';
+      rows.forEach(row => {
+        const rowEl = document.createElement('div');
+        rowEl.className = 'key-row';
+        row.forEach(key => {
+          const btn = document.createElement('button');
+          btn.className = 'key' + (key.length > 1 ? ' wide' : '');
+          btn.textContent = key;
+          btn.dataset.key = key;
+          btn.addEventListener('click', () => handleKey(key));
+          rowEl.appendChild(btn);
+        });
+        kb.appendChild(rowEl);
+      });
+    }
+
+    function updateTile(row, col, letter) {
+      const tile = document.getElementById(`tile-${row}-${col}`);
+      tile.textContent = letter;
+      tile.className = 'tile' + (letter ? ' filled' : '');
+    }
+
+    function toast(msg, duration = 1500) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), duration);
+    }
+
+    function revealRow(rowIndex, result) {
+      const statuses = getStatuses(result);
+      statuses.forEach((status, col) => {
+        setTimeout(() => {
+          const tile = document.getElementById(`tile-${rowIndex}-${col}`);
+          tile.classList.add('revealed', status);
+        }, col * 300);
+      });
+    }
+
+    function getStatuses(guess) {
+      const answer = currentWord.split('');
+      const result = Array(guess.length).fill('absent');
+      const used = Array(guess.length).fill(false);
+
+      // Correct
+      for (let i = 0; i < guess.length; i++) {
+        if (guess[i] === answer[i]) {
+          result[i] = 'correct';
+          used[i] = true;
+        }
+      }
+      // Present
+      for (let i = 0; i < guess.length; i++) {
+        if (result[i] === 'correct') continue;
+        for (let j = 0; j < answer.length; j++) {
+          if (!used[j] && guess[i] === answer[j]) {
+            result[i] = 'present';
+            used[j] = true;
+            break;
+          }
+        }
+      }
+      return result;
+    }
+
+    function updateKeys(guess) {
+      const statuses = getStatuses(guess);
+      const priority = { 'correct': 3, 'present': 2, 'absent': 1 };
+
+      guess.forEach((letter, i) => {
+        const cur = statuses[i];
+        const prev = keyStates[letter];
+        // Only upgrade, never downgrade (correct beats present beats absent)
+        if (!prev || priority[cur] > priority[prev]) {
+          keyStates[letter] = cur;
+        }
+      });
+
+      document.querySelectorAll('.key').forEach(btn => {
+        const k = btn.dataset.key;
+        if (keyStates[k]) {
+          btn.classList.remove('correct', 'present', 'absent');
+          btn.classList.add(keyStates[k]);
+        }
+      });
+    }
+
+    // ===================== GEMINI =====================
+    let hintUsed = false;
+    let previousClues = [];
+
+    async function callGemini(prompt) {
+      const response = await fetch('/parkle/proxy.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      if (!response.ok) throw new Error(`Proxy error ${response.status}`);
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      return data.text;
+    }
+
+    async function fetchGeminiHint() {
+      const btn = document.getElementById('hint-btn');
+      const hintText = document.getElementById('hint-text');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="hint-spinner"></span>';
+      btn.style.fontSize = '12px';
+      btn.style.opacity = '1';
+
+      const avoidedCluesStr = previousClues.length > 0
+        ? `\nIMPORTANT: I need a NEW unique clue! Do NOT reuse or approximate any of these previous clues:\n- ${previousClues.join('\n- ')}\nProvide a completely different fun fact or hint.`
+        : '';
+
+      const prompt = `You are the Magic Mirror from Disney, helping players in a Disney word puzzle game.
+The secret word is "${currentWord}".
+This word is either a Disney character, Disney film, or something found at a Disney theme park (like a food, drink, attraction, or park term).
+Give ONE short clue (one sentence, max 15 words) that hints at the word AS IT RELATES TO DISNEY — always connect it to a specific movie, character, park, or Disney experience.
+For example, if the word is a food like CHURRO, say something like "A cinnamon-sugar snack sold at carts throughout Disneyland since opening day."
+Do NOT say the word "${currentWord}" or spell it out.${avoidedCluesStr}
+Reply with ONLY the clue sentence, nothing else.`;
+
+      try {
+        const clue = await callGemini(prompt);
+        if (clue) previousClues.push(clue);
+        hintText.innerHTML = `<span class="hint-text">🪞 ${clue || getFallbackHint()}</span>`;
+      } catch (err) {
+        console.error('Groq hint error:', err);
+        hintText.innerHTML = `<span class="hint-text">🪞 ${getFallbackHint()}</span>`;
+      }
+
+      hintUsed = true;
+      btn.disabled = false;
+      btn.innerHTML = '✨';
+      btn.style.fontSize = '18px';
+      btn.style.opacity = '1';
+    }
+
+    async function fetchWinFact(word) {
+      const winFactEl = document.getElementById('win-fact');
+
+      const prompt = `You are a Disney parks and films expert. The player just correctly guessed the word "${word}" in a Disney word puzzle.
+This word is either a Disney character, Disney film, or something found at a Disney theme park (like a food, drink, attraction, or park term).
+Share ONE fun, specific fact about "${word}" AS IT RELATES TO DISNEY — connect it to a specific park, movie, character, or Disney experience.
+For example, if the word is CHURRO: "Disney parks sell over 3.4 million churros every year — enough to stretch from Disneyland to Disney World."
+Keep it to 1-2 sentences. Be enthusiastic and specific. Do NOT start with "Did you know".
+Reply with ONLY the fact, nothing else.`;
+
+      try {
+        const fact = await callGemini(prompt);
+        if (fact) {
+          winFactEl.innerHTML = `<span class="fact-label">✨ Disney Fact</span>${fact}`;
+          winFactEl.classList.add('show');
+        }
+      } catch (err) {
+        console.error('Gemini fact error:', err);
+        const fallback = getFallbackFact(word);
+        if (fallback) {
+          winFactEl.innerHTML = `<span class="fact-label">✨ Disney Fact</span>${fallback}`;
+          winFactEl.classList.add('show');
+        }
+      }
+    }
+
+    function getFallbackHint() {
+      const hints = {
+        'WALT': 'The visionary founder of The Walt Disney Company, born in Chicago in 1901',
+        'EPCOT': 'A theme park at Walt Disney World that stands for Experimental Prototype Community of Tomorrow',
+        'GOOFY': 'Mickey Mouse\'s clumsy best friend who first appeared in 1932\'s "Mickey\'s Revue"',
+        'PLUTO': 'Mickey Mouse\'s pet bloodhound, one of the few main Disney characters who doesn\'t speak',
+        'DUMBO': 'A baby elephant at a circus who discovers his enormous ears let him fly',
+        'SIMBA': 'The lion cub from "The Lion King" who must avenge his father Mufasa\'s murder',
+        'NALA': 'Simba\'s childhood friend and eventual queen in "The Lion King"',
+        'ARIEL': 'The Little Mermaid who trades her voice to the sea witch Ursula for human legs',
+        'BELLE': 'A bookworm from a French village who becomes the prisoner of a cursed Beast',
+        'ELSA': 'The ice queen of Arendelle in "Frozen" whose powers accidentally plunge her kingdom into winter',
+        'ANNA': 'Elsa\'s adventurous younger sister in "Frozen" who goes on a quest to save Arendelle',
+        'OLAF': 'The cheerful snowman in "Frozen" who was accidentally brought to life by Elsa\'s magic',
+        'MOANA': 'The chief\'s daughter in Polynesia chosen by the ocean to restore the heart of Te Fiti',
+        'MULAN': 'A young Chinese woman who disguises herself as a soldier to take her father\'s place in war',
+        'TIANA': 'A hardworking New Orleans waitress in "The Princess and the Frog" who dreams of opening a restaurant',
+        'NEMO': 'A clownfish with a lucky fin who gets separated from his dad Marlin in "Finding Nemo"',
+        'DORY': 'A blue tang fish with short-term memory loss who helps Marlin find Nemo',
+        'BUZZ': 'A Space Ranger action figure in "Toy Story" who initially believes he is a real space ranger',
+        'WOODY': 'A pull-string cowboy doll and Andy\'s favorite toy in "Toy Story"',
+        'REMY': 'A rat with extraordinary taste in "Ratatouille" who secretly guides a chef named Linguini',
+        'MIKE': 'The one-eyed green monster in "Monsters, Inc." who is Sulley\'s comedic best friend',
+        'CHIP': 'One half of the chipmunk duo Chip \'n\' Dale, the more serious and bossy of the two',
+        'DALE': 'The goofy, fun-loving chipmunk of the Chip \'n\' Dale duo',
+        'LILO': 'A lonely Hawaiian girl in "Lilo & Stitch" who adopts an alien experiment as her dog',
+        'BOLT': 'A TV dog star in "Bolt" who believes his on-screen superpowers are real',
+        'IAGO': 'The sarcastic talking parrot and sidekick to villain Jafar in "Aladdin"',
+        'HANS': 'The charming but secretly villainous prince from the Southern Isles in "Frozen"',
+        'SVEN': 'Kristoff\'s loyal reindeer companion in "Frozen" who acts more like a dog than a deer',
+        'JUDY': 'The first rabbit police officer in Zootopia, voiced by Ginnifer Goodwin',
+        'NICK': 'The sly fox con artist in Zootopia who becomes Judy Hopps\'s unlikely partner',
+        'DORY': 'A forgetful blue tang who helps Marlin cross the ocean in "Finding Nemo"',
+        'GILL': 'The battle-scarred moorish idol fish who leads the Tank Gang in "Finding Nemo"',
+        'MAUI': 'The boastful demigod with a magical fishhook in "Moana" who can shape-shift into animals',
+        'GENIE': 'The all-powerful but wisecracking blue genie of the lamp in "Aladdin"',
+        'FLORA': 'One of the three good fairies in "Sleeping Beauty" who bestows gifts on Princess Aurora',
+        'FAUNA': 'The gentle fairy in "Sleeping Beauty" who gives Aurora the gift of song',
+        'MERIDA': 'The Scottish princess in "Brave" who accidentally turns her mother into a bear',
+      };
+      return hints[currentWord] || `A Disney character or place — think movies, parks, and magic!`;
+    }
+
+    function getFallbackFact(word) {
+      const facts = {
+        'WALT': 'Walt Disney won 22 Academy Awards during his lifetime — more than any other individual in history.',
+        'EPCOT': 'EPCOT originally stood for "Experimental Prototype Community of Tomorrow" — Walt envisioned it as an actual futuristic city, not a theme park.',
+        'SIMBA': 'The name Simba means "lion" in Swahili, and "The Lion King" was loosely inspired by Shakespeare\'s Hamlet.',
+        'ELSA': '"Let It Go" from Frozen won the Academy Award for Best Original Song in 2014 and has been translated into 42 languages.',
+        'ARIEL': 'Ariel was the first Disney Princess with a distinct personality — previous princesses were more passive. She changed the Disney formula.',
+        'MOANA': 'The film\'s creators spent years researching Polynesian culture and worked with a "story trust" of Pacific Island cultural experts.',
+        'NEMO': '"Finding Nemo" held the record for highest-grossing animated film for years and reignited interest in marine biology.',
+        'WOODY': 'Woody was originally written as a sarcastic bully before Pixar reworked his character into the loyal hero we know today.',
+        'BUZZ': 'Buzz Lightyear is named after real-life Apollo 11 astronaut Buzz Aldrin.',
+        'GOOFY': 'Goofy originally debuted as a character named "Dippy Dawg" in 1932 before being renamed.',
+        'REMY': 'The Pixar team visited top restaurants in Paris and took cooking classes to research Ratatouille.',
+        'MULAN': '"Mulan" is based on the ancient Chinese legend of Hua Mulan, which dates back over 1,500 years.',
+      };
+      return facts[word] || null;
+    }
+
+    async function handleKey(key) {
+      if (gameOver) return;
+      const row = guesses.length;
+
+      if (key === '⌫' || key === 'Backspace') {
+        if (currentGuess.length > 0) {
+          currentGuess.pop();
+          updateTile(row, currentGuess.length, '');
+        }
+        return;
+      }
+
+      if (key === 'ENTER' || key === 'Enter') {
+        if (currentGuess.length < wordLength) {
+          toast('Not enough letters');
+          document.getElementById(`row-${row}`).classList.add('shake');
+          setTimeout(() => document.getElementById(`row-${row}`).classList.remove('shake'), 400);
+          return;
+        }
+        const word = currentGuess.join('');
+
+        // Check local lists first (instant), then Groq if unknown
+        if (!isKnownValid(word)) {
+          // Show checking state
+          toast('Checking…', 3000);
+        }
+
+        const valid = await isValidGuess(word);
+        if (!valid) {
+          toast('Not a valid word');
+          document.getElementById(`row-${row}`).classList.add('shake');
+          setTimeout(() => document.getElementById(`row-${row}`).classList.remove('shake'), 400);
+          return;
+        }
+
+        guesses.push([...currentGuess]);
+        revealRow(row, currentGuess);
+        const submittedGuess = [...currentGuess]; // capture before clearing
+        const flipDuration = wordLength * 300 + 200;
+        setTimeout(() => updateKeys(submittedGuess), flipDuration);
+
+        const won = word === currentWord;
+        setTimeout(() => {
+          if (won) {
+            const emojis = ['✨', '🎉', '🏰', '🌟', '🎊'];
+            toast(emojis[Math.floor(Math.random() * emojis.length)] + ' Magical!', 2000);
+            for (let c = 0; c < wordLength; c++) {
+              setTimeout(() => {
+                document.getElementById(`tile-${row}-${c}`).classList.add('bounce');
+              }, c * 80);
+            }
+            endGame(true);
+          } else if (guesses.length === MAX_GUESSES) {
+            toast(currentWord, 3000);
+            endGame(false);
+          } else {
+            // Show give up button after 3 guesses
+            if (guesses.length >= 3) {
+              document.getElementById('giveup-bar').classList.add('show');
+            }
+          }
+        }, wordLength * 300 + 200);
+
+        currentGuess = [];
+        return;
+      }
+
+      if (/^[A-Za-z]$/.test(key) && currentGuess.length < wordLength) {
+        currentGuess.push(key.toUpperCase());
+        updateTile(row, currentGuess.length - 1, key.toUpperCase());
+      }
+    }
+
+    function endGame(won) {
+      gameOver = true;
+      stats.played++;
+      if (won) {
+        stats.wins++;
+        stats.streak++;
+        if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
+      } else {
+        stats.streak = 0;
+      }
+      localStorage.setItem('parkle_stats', JSON.stringify(stats));
+
+      setTimeout(() => {
+        const panel = document.getElementById('result-panel');
+        panel.classList.add('show');
+        document.getElementById('result-overlay').classList.add('show');
+        const title = document.getElementById('result-title');
+        title.textContent = won ? '🏰 You Win!' : '💀 Game Over';
+        title.className = won ? 'win' : 'lose';
+        document.getElementById('result-word').innerHTML = `The word was <strong>${currentWord}</strong>`;
+        document.getElementById('s-played').textContent = stats.played;
+        document.getElementById('s-wins').textContent = stats.wins;
+        document.getElementById('s-streak').textContent = stats.streak;
+        if (won) fetchWinFact(currentWord);
+      }, 600);
+    }
+
+    function newGame() {
+      if (wordQueue.length === 0) buildQueue();
+      currentWord = pickWord();
+      wordLength = currentWord.length;
+      currentGuess = [];
+      guesses = [];
+      gameOver = false;
+      keyStates = {};
+      previousClues = []; // reset prior clues
+      document.getElementById('result-panel').classList.remove('show');
+      document.getElementById('result-overlay').classList.remove('show');
+      document.getElementById('win-fact').classList.remove('show');
+      document.getElementById('win-fact').innerHTML = '';
+      hintUsed = false;
+      document.getElementById('hint-btn').disabled = false;
+      document.getElementById('hint-btn').innerHTML = '✨';
+      document.getElementById('hint-btn').style.fontSize = '18px';
+      document.getElementById('hint-btn').style.opacity = '1';
+      document.getElementById('hint-text').innerHTML = '';
+      document.getElementById('giveup-bar').classList.remove('show');
+      buildBoard();
+      buildKeyboard();
+      updateCounter();
+      console.log('Word:', currentWord); // For testing
+    }
+
+    // ===================== EVENTS =====================
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'Backspace') handleKey('Backspace');
+      else if (e.key === 'Enter') handleKey('Enter');
+      else if (/^[a-zA-Z]$/.test(e.key)) handleKey(e.key);
+    });
+
+    document.getElementById('hint-btn').addEventListener('click', fetchGeminiHint);
+
+    document.getElementById('giveup-btn').addEventListener('click', () => {
+      toast(currentWord, 3000);
+      endGame(false);
+    });
+
+    document.getElementById('new-game-btn').addEventListener('click', newGame);
+
+    document.querySelectorAll('.len-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.len-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        lengthMode = btn.dataset.len;
+        wordQueue = []; // reset queue for new mode
+        newGame();
+      });
+    });
+
+    document.getElementById('answer-btn').addEventListener('click', () => {
+      document.getElementById('answer-display').textContent = currentWord;
+      document.getElementById('answer-modal').classList.add('show');
+    });
+    document.getElementById('answer-close').addEventListener('click', () => {
+      document.getElementById('answer-modal').classList.remove('show');
+    });
+    document.getElementById('answer-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+    });
+
+    document.getElementById('help-btn').addEventListener('click', () => {
+      document.getElementById('help-modal').classList.add('show');
+    });
+    document.getElementById('help-close').addEventListener('click', () => {
+      document.getElementById('help-modal').classList.remove('show');
+    });
+    document.getElementById('help-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+    });
+
+    // Start
+    newGame();
+
+    // ── iOS Web App Safe Area Fix ──
+    // CSS env() is unreliable in standalone mode. We measure directly.
+    (function fixStandaloneLayout() {
+      const isStandalone = window.navigator.standalone === true;
+      if (!isStandalone) return;
+
+      const header = document.querySelector('header');
+      const main = document.querySelector('main');
+
+      // Create an invisible probe element to read the actual computed safe area
+      const probe = document.createElement('div');
+      probe.style.cssText = [
+        'position:fixed', 'top:0', 'left:0',
+        'width:1px', 'height:1px',
+        'padding-top:env(safe-area-inset-top)',
+        'padding-bottom:env(safe-area-inset-bottom)',
+        'visibility:hidden', 'pointer-events:none'
+      ].join(';');
+      document.body.appendChild(probe);
+
+      function apply() {
+        const cs = getComputedStyle(probe);
+        let top = parseFloat(cs.paddingTop) || 0;
+        let bottom = parseFloat(cs.paddingBottom) || 0;
+
+        // iPhone 17 Pro Max Dynamic Island ~59px. 
+        // If env() returned 0 or too small, use device-based fallback.
+        const screenH = window.screen.height;
+        if (top < 50) {
+          // Pro/Pro Max with Dynamic Island: screen height >= 932
+          top = screenH >= 932 ? 62 : 54;
+        }
+        if (bottom < 20) {
+          bottom = 34; // home indicator
+        }
+
+        header.style.paddingTop = top + 'px';
+        main.style.paddingBottom = bottom + 'px';
+        document.body.removeChild(probe);
+      }
+
+      // Wait one frame so CSS is fully computed
+      requestAnimationFrame(() => requestAnimationFrame(apply));
+    })();
+
+    // Disable pinch-to-zoom on iOS Safari
+    document.addEventListener('gesturestart', function (e) {
+      e.preventDefault();
+    });
+    document.addEventListener('gesturechange', function (e) {
+      e.preventDefault();
+    });
+    document.addEventListener('gestureend', function (e) {
+      e.preventDefault();
+    });
+    document.addEventListener('touchmove', function (e) {
+      if (e.scale !== 1 || (e.touches && e.touches.length > 1)) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
+</body>
+
+</html>

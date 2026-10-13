@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AAO 2026 · Ride Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #f59e0b;
+    --gold-light: #fbbf24;
+    --usf: #3b82f6;
+    --ioa: #10b981;
+    --mild-bg: #d1fae5; --mild-text: #065f46;
+    --mod-bg: #fef3c7; --mod-text: #92400e;
+    --thrill-bg: #fee2e2; --thrill-text: #991b1b;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0a1628;
+    --bg2: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.09);
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --checker-bg: rgba(245,158,11,0.07);
+    --checker-border: rgba(245,158,11,0.25);
+    --input-bg: rgba(10,22,40,0.9);
+    --input-border: rgba(245,158,11,0.35);
+    --btn-bg: rgba(10,22,40,0.6);
+    --btn-border: rgba(148,163,184,0.2);
+    --btn-color: #94a3b8;
+    --card-bg: rgba(255,255,255,0.03);
+    --card-border: rgba(255,255,255,0.08);
+    --can-bg: rgba(34,197,94,0.05);
+    --can-border: rgba(34,197,94,0.2);
+    --cant-bg: rgba(239,68,68,0.04);
+    --cant-border: rgba(239,68,68,0.15);
+    --toggle-bg: #1e293b;
+    --toggle-border: rgba(255,255,255,0.12);
+  }
+
+  [data-theme="light"] {
+    --bg: #f8fafc;
+    --bg2: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --text: #0f172a;
+    --text2: #475569;
+    --text3: #94a3b8;
+    --checker-bg: rgba(245,158,11,0.08);
+    --checker-border: rgba(245,158,11,0.4);
+    --input-bg: #ffffff;
+    --input-border: rgba(245,158,11,0.5);
+    --btn-bg: #ffffff;
+    --btn-border: #e2e8f0;
+    --btn-color: #64748b;
+    --card-bg: #ffffff;
+    --card-border: #e2e8f0;
+    --can-bg: #f0fdf4;
+    --can-border: #86efac;
+    --cant-bg: #fff5f5;
+    --cant-border: #fca5a5;
+    --toggle-bg: #f1f5f9;
+    --toggle-border: #e2e8f0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Open Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px 14px 48px;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  [data-theme="dark"] body {
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(245,158,11,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(16,185,129,0.04) 0%, transparent 60%);
+  }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 100;
+    background: var(--toggle-bg);
+    border: 1.5px solid var(--toggle-border);
+    border-radius: 50px;
+    padding: 7px 14px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 12px; font-weight: 700;
+    color: var(--text2);
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+  .toggle-icon { font-size: 14px; }
+
+  /* HEADER */
+  .header { text-align: center; margin-bottom: 28px; padding-top: 8px; }
+  .header-eyebrow {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(24px, 6vw, 38px);
+    font-weight: 700; color: var(--text);
+    margin-bottom: 6px;
+  }
+  .header p { color: var(--text2); font-size: 13px; font-weight: 400; }
+
+  /* HEIGHT CHECKER */
+  .checker {
+    max-width: 680px; margin: 0 auto 22px;
+    background: var(--checker-bg);
+    border: 1.5px solid var(--checker-border);
+    border-radius: 14px; padding: 16px 20px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  }
+  .checker-label { flex: 1; min-width: 140px; }
+  .cl-title { color: var(--gold); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; margin-bottom: 3px; }
+  .cl-sub { color: var(--text2); font-size: 12px; font-weight: 400; }
+  .checker-input-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .checker input {
+    width: 72px; padding: 8px 10px; border-radius: 10px;
+    border: 1.5px solid var(--input-border);
+    background: var(--input-bg); color: var(--text);
+    font-family: 'Open Sans', sans-serif; font-size: 16px; font-weight: 600;
+    text-align: center; outline: none; transition: border-color 0.2s;
+  }
+  .checker input:focus { border-color: var(--gold); }
+  .unit { color: var(--text2); font-size: 13px; font-weight: 600; }
+  .ride-count {
+    background: var(--gold); color: #0a1628;
+    font-weight: 700; font-size: 11px;
+    padding: 4px 12px; border-radius: 20px; display: none;
+  }
+  .ride-count.visible { display: inline-block; }
+
+  /* FILTERS */
+  .filters {
+    max-width: 680px; margin: 0 auto 12px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .filter-group { display: flex; gap: 5px; flex-wrap: wrap; }
+  .divider { width: 1px; height: 22px; background: var(--border); }
+  .filter-btn {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px;
+    font-family: 'Open Sans', sans-serif; font-weight: 700; cursor: pointer;
+    border: 1.5px solid var(--btn-border);
+    background: var(--btn-bg); color: var(--btn-color);
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .filter-btn.active { border-color: var(--gold); background: rgba(245,158,11,0.12); color: var(--gold); }
+
+  .sort-row {
+    max-width: 680px; margin: 0 auto 14px;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .sort-label { color: var(--text3); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+  .sort-btn {
+    padding: 5px 11px; border-radius: 8px; font-size: 11px;
+    font-family: 'Open Sans', sans-serif; font-weight: 700; cursor: pointer;
+    border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text3);
+    transition: all 0.15s;
+  }
+  .sort-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(245,158,11,0.08); }
+
+  /* LEGEND */
+  .legend {
+    max-width: 680px; margin: 0 auto 12px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); font-weight: 600; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+
+  .results-count {
+    max-width: 680px; margin: 0 auto 8px;
+    font-size: 12px; color: var(--text3); text-align: right; font-weight: 600;
+  }
+
+  /* RIDE CARDS */
+  .rides { max-width: 680px; margin: 0 auto; }
+  .ride-card {
+    border-radius: 12px; padding: 13px 16px; margin-bottom: 7px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    transition: opacity 0.2s, background 0.2s, border-color 0.2s;
+    animation: fadeIn 0.2s ease both;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .ride-card.can-ride { background: var(--can-bg); border-color: var(--can-border); }
+  .ride-card.cannot-ride { background: var(--cant-bg); border-color: var(--cant-border); opacity: 0.5; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+  .eligibility-icon { font-size: 16px; min-width: 20px; }
+  .ride-info { flex: 1; min-width: 160px; }
+  .ride-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .ride-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .thrill-badge {
+    font-size: 10px; font-family: 'Open Sans', sans-serif;
+    font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase;
+  }
+  .thrill-mild { background: var(--mild-bg); color: var(--mild-text); }
+  .thrill-moderate { background: var(--mod-bg); color: var(--mod-text); }
+  .thrill-thrill { background: var(--thrill-bg); color: var(--thrill-text); }
+  .ride-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .ride-area { font-size: 12px; font-weight: 700; }
+  .ride-area.usf { color: var(--usf); }
+  .ride-area.ioa { color: var(--ioa); }
+  .ride-notes { font-size: 11px; color: var(--text3); font-style: italic; font-weight: 400; }
+
+  .height-info { text-align: right; min-width: 110px; }
+  .height-badge {
+    display: inline-flex; align-items: center;
+    font-family: 'Open Sans', sans-serif; font-size: 12px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .height-badge.any { background: #d1fae5; color: #065f46; border: 1.5px solid #6ee7b7; }
+  .height-badge.req { background: #dbeafe; color: #1d4ed8; border: 1.5px solid #93c5fd; }
+  .companion-text { font-size: 11px; color: var(--text3); margin-top: 3px; font-weight: 600; }
+
+  .footer { text-align: center; margin-top: 32px; color: var(--text3); font-size: 12px; line-height: 2; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+  <span class="toggle-icon" id="themeIcon">☀️</span>
+  <span id="themeLabel">Light Mode</span>
+</button>
+
+<div class="header">
+  <div class="header-eyebrow">AAO 2026 · May 2, 2026 · Universal Orlando Resort</div>
+  <h1>Ride Guide</h1>
+  <p>All attractions available at tonight's exclusive event · Heights in inches</p>
+</div>
+
+<div class="checker">
+  <div class="checker-label">
+    <div class="cl-title">👶 Height Checker</div>
+    <div class="cl-sub">Enter child's height to see what they can ride</div>
+  </div>
+  <div class="checker-input-row">
+    <input type="number" id="heightInput" placeholder="e.g. 44" min="24" max="80" oninput="updateHeight()">
+    <span class="unit">inches</span>
+    <span class="ride-count" id="rideCount"></span>
+  </div>
+</div>
+
+<div class="filters">
+  <div class="filter-group" id="parkFilters">
+    <button class="filter-btn active" onclick="setFilter('park','All',this)">All Parks</button>
+    <button class="filter-btn" onclick="setFilter('park','USF',this)">🎬 Studios</button>
+    <button class="filter-btn" onclick="setFilter('park','IOA',this)">🌊 Islands</button>
+  </div>
+  <div class="divider"></div>
+  <div class="filter-group" id="thrillFilters">
+    <button class="filter-btn active" onclick="setFilter('thrill','All',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('thrill','mild',this)">Mild</button>
+    <button class="filter-btn" onclick="setFilter('thrill','moderate',this)">Moderate</button>
+    <button class="filter-btn" onclick="setFilter('thrill','thrill',this)">Thrill</button>
+  </div>
+</div>
+
+<div class="sort-row">
+  <span class="sort-label">Sort:</span>
+  <button class="sort-btn active" onclick="setSort('park',this)">By Park</button>
+  <button class="sort-btn" onclick="setSort('height',this)">By Height</button>
+  <button class="sort-btn" onclick="setSort('name',this)">By Name</button>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot" style="background:#d1fae5;border:1px solid #6ee7b7"></span> Mild</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#fef3c7;border:1px solid #fcd34d"></span> Moderate</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#fee2e2;border:1px solid #fca5a5"></span> Thrill</div>
+  <div class="legend-item" id="legendCan" style="display:none">✅ Can ride</div>
+  <div class="legend-item" id="legendCant" style="display:none">❌ Too short</div>
+</div>
+
+<div class="results-count" id="resultsCount"></div>
+<div class="rides" id="rideList"></div>
+
+<div class="footer">
+  Height requirements from Universal Orlando Resort official guidelines<br>
+  Always verify at the park · Child Swap available on most rides
+</div>
+
+<script>
+const rides = [
+  { name:"E.T. Adventure", park:"USF", area:"Hollywood", min:34, companion:'34"–48"', thrill:"mild", notes:'Under 34" not permitted' },
+  { name:"Despicable Me Minion Mayhem", park:"USF", area:"Minion Land", min:40, companion:'40"–48"', thrill:"mild", notes:'Under 40" use adjacent seat' },
+  { name:"Illumination's Villain-Con Minion Blast", park:"USF", area:"Minion Land", min:null, companion:'Under 48"', thrill:"mild", notes:"No handheld infants" },
+  { name:"Race Through New York Starring Jimmy Fallon", park:"USF", area:"New York", min:40, companion:'40"–48"', thrill:"mild", notes:null },
+  { name:"Revenge of the Mummy", park:"USF", area:"New York", min:48, companion:'None (48" required)', thrill:"thrill", notes:"Indoor roller coaster" },
+  { name:"TRANSFORMERS: The Ride-3D", park:"USF", area:"New York", min:40, companion:'40"–48"', thrill:"moderate", notes:null },
+  { name:"Fast & Furious – Supercharged", park:"USF", area:"San Francisco", min:40, companion:'40"–48"', thrill:"mild", notes:null },
+  { name:"Harry Potter and the Escape from Gringotts™", park:"USF", area:"Diagon Alley", min:42, companion:'42"–48"', thrill:"moderate", notes:"Test seat available" },
+  { name:"Hogwarts Express™ (King's Cross)", park:"USF", area:"Diagon Alley", min:null, companion:'None', thrill:"mild", notes:"No height requirement" },
+  { name:"MEN IN BLACK™ Alien Attack", park:"USF", area:"World Expo", min:42, companion:'42"–48"', thrill:"moderate", notes:null },
+  { name:"The Simpsons Ride™", park:"USF", area:"Springfield", min:40, companion:'40"–48"', thrill:"moderate", notes:null },
+  { name:"Kang & Kodos' Twirl 'n' Hurl", park:"USF", area:"Springfield", min:null, companion:'Under 48"', thrill:"mild", notes:"No minimum height" },
+  { name:"Trolls Trollercoaster", park:"USF", area:"DreamWorks Land", min:36, companion:'36"–48"', thrill:"mild", notes:null },
+  { name:"Shrek's Swamp for Little Ogres", park:"USF", area:"DreamWorks Land", min:null, companion:'None', thrill:"mild", notes:"Play area" },
+  { name:"Poppy's Playground", park:"USF", area:"DreamWorks Land", min:null, companion:'None', thrill:"mild", notes:"Play area" },
+  { name:"Po's Kung Fu Training Camp", park:"USF", area:"DreamWorks Land", min:null, companion:'None', thrill:"mild", notes:"Play area" },
+  { name:"Doctor Doom's Fearfall®", park:"IOA", area:"Marvel Super Hero Island", min:52, companion:'None (52" required)', thrill:"thrill", notes:"Drop tower" },
+  { name:"Storm Force Accelatron®", park:"IOA", area:"Marvel Super Hero Island", min:null, companion:'Under 48"', thrill:"mild", notes:"No minimum height" },
+  { name:"The Amazing Adventures of Spider-Man®", park:"IOA", area:"Marvel Super Hero Island", min:40, companion:'40"–48"', thrill:"moderate", notes:null },
+  { name:"The Incredible Hulk Coaster®", park:"IOA", area:"Marvel Super Hero Island", min:54, companion:'None (54" required)', thrill:"thrill", notes:"Steel roller coaster" },
+  { name:"Dudley Do-Right's Ripsaw Falls®", park:"IOA", area:"Toon Lagoon", min:44, companion:'44"–48"', thrill:"moderate", notes:"Water ride – you will get wet" },
+  { name:"Me Ship, The Olive®", park:"IOA", area:"Toon Lagoon", min:null, companion:'None', thrill:"mild", notes:"Interactive play area" },
+  { name:"Popeye & Bluto's Bilge-Rat Barges®", park:"IOA", area:"Toon Lagoon", min:42, companion:'42"–48"', thrill:"moderate", notes:"Raft ride – you will get wet" },
+  { name:"Skull Island: Reign of Kong", park:"IOA", area:"Skull Island", min:36, companion:'36"–48"', thrill:"moderate", notes:null },
+  { name:"Camp Jurassic", park:"IOA", area:"Jurassic Park", min:null, companion:'None', thrill:"mild", notes:"Play area" },
+  { name:"Pteranodon Flyers", park:"IOA", area:"Jurassic Park", min:36, companion:'36"–48"', thrill:"mild", notes:'Adults over 56" must ride with child' },
+  { name:"Jurassic World VelociCoaster", park:"IOA", area:"Jurassic Park", min:51, companion:'None (51" required)', thrill:"thrill", notes:"High-speed launched coaster" },
+  { name:"Harry Potter and the Forbidden Journey™", park:"IOA", area:"Hogsmeade", min:48, companion:'None (48" required)', thrill:"thrill", notes:"Test seat available" },
+  { name:"Flight of the Hippogriff™", park:"IOA", area:"Hogsmeade", min:36, companion:'36"–48"', thrill:"moderate", notes:null },
+  { name:"Hagrid's Magical Creatures Motorbike Adventure™", park:"IOA", area:"Hogsmeade", min:48, companion:'None (48" required)', thrill:"thrill", notes:"Test seat available" },
+  { name:"Hogwarts Express™ (Hogsmeade)", park:"IOA", area:"Hogsmeade", min:null, companion:'None', thrill:"mild", notes:"No height requirement" },
+  { name:"The High in the Sky Seuss Trolley Train Ride!™", park:"IOA", area:"Seuss Landing", min:null, companion:'Under 48"', thrill:"mild", notes:"No minimum height" },
+  { name:"One Fish, Two Fish, Red Fish, Blue Fish™", park:"IOA", area:"Seuss Landing", min:null, companion:'Under 48"', thrill:"mild", notes:"No minimum height" },
+  { name:"The Cat in The Hat™", park:"IOA", area:"Seuss Landing", min:null, companion:'Under 48"', thrill:"mild", notes:"No minimum height" },
+  { name:"Caro-Seuss-el™", park:"IOA", area:"Seuss Landing", min:null, companion:'None', thrill:"mild", notes:"No height requirement" },
+];
+
+let filters = { park: 'All', thrill: 'All' };
+let sortMode = 'park';
+let childHeight = null;
+let isDark = true;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('themeLabel').textContent = isDark ? 'Light Mode' : 'Dark Mode';
+}
+
+function setFilter(type, val, btn) {
+  filters[type] = val;
+  const group = type === 'park' ? 'parkFilters' : 'thrillFilters';
+  document.querySelectorAll(`#${group} .filter-btn`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function setSort(val, btn) {
+  sortMode = val;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function updateHeight() {
+  const val = parseInt(document.getElementById('heightInput').value);
+  childHeight = isNaN(val) ? null : val;
+  document.getElementById('legendCan').style.display = childHeight ? 'flex' : 'none';
+  document.getElementById('legendCant').style.display = childHeight ? 'flex' : 'none';
+  render();
+}
+
+function canRide(ride) {
+  if (!childHeight) return null;
+  if (ride.min === null) return true;
+  return childHeight >= ride.min;
+}
+
+function render() {
+  let filtered = rides.filter(r => {
+    if (filters.park !== 'All' && r.park !== filters.park) return false;
+    if (filters.thrill !== 'All' && r.thrill !== filters.thrill) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (sortMode === 'height') return (a.min ?? -1) - (b.min ?? -1);
+    if (sortMode === 'name') return a.name.localeCompare(b.name);
+    if (a.park !== b.park) return a.park.localeCompare(b.park);
+    return a.area.localeCompare(b.area);
+  });
+
+  const canCount = childHeight ? filtered.filter(r => canRide(r) === true).length : null;
+
+  const countEl = document.getElementById('rideCount');
+  if (childHeight && canCount !== null) {
+    countEl.textContent = `${canCount} rides available`;
+    countEl.classList.add('visible');
+  } else {
+    countEl.classList.remove('visible');
+  }
+
+  document.getElementById('resultsCount').textContent = `Showing ${filtered.length} ride${filtered.length !== 1 ? 's' : ''}`;
+
+  const list = document.getElementById('rideList');
+  list.innerHTML = '';
+
+  filtered.forEach((ride, i) => {
+    const eligible = canRide(ride);
+    const parkClass = ride.park === 'USF' ? 'usf' : 'ioa';
+    const parkEmoji = ride.park === 'USF' ? '🎬' : '🌊';
+
+    let cardClass = 'ride-card';
+    if (eligible === true) cardClass += ' can-ride';
+    if (eligible === false) cardClass += ' cannot-ride';
+
+    const heightBadge = ride.min === null
+      ? `<span class="height-badge any">✓ Any Height</span>`
+      : `<span class="height-badge req">${ride.min}" min</span>`;
+
+    const eligIcon = eligible === true ? '✅' : eligible === false ? '❌' : '';
+
+    list.innerHTML += `
+      <div class="${cardClass}" style="animation-delay:${i * 0.025}s">
+        ${childHeight ? `<span class="eligibility-icon">${eligIcon}</span>` : ''}
+        <div class="ride-info">
+          <div class="ride-name-row">
+            <span class="ride-name">${ride.name}</span>
+            <span class="thrill-badge thrill-${ride.thrill}">${ride.thrill}</span>
+          </div>
+          <div class="ride-meta">
+            <span class="ride-area ${parkClass}">${parkEmoji} ${ride.area}</span>
+            ${ride.notes ? `<span class="ride-notes">${ride.notes}</span>` : ''}
+          </div>
+        </div>
+        <div class="height-info">
+          ${heightBadge}
+          <div class="companion-text">Companion: ${ride.companion}</div>
+        </div>
+      </div>`;
+  });
+}
+
+render();
+</script>
+</body>
+</html>
